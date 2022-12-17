@@ -19,17 +19,17 @@
 
 ## Fonctionalités
 
-[] Login
+[x] Login
 
-[] Register
+[x] Register
 
-[] Change credentials
+[x] Change credentials
 
-[] Create an event
+[x] Create an event
 
-[] Change an event 
+[x] Change an event 
 
-[] Delete an event
+[x] Delete an event
 
-[] Display Agenda
+[x] Display Agenda
 
