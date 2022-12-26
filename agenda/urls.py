@@ -14,21 +14,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from events.views import EventList, EventDetail, EventCreate, EventUpdate, EventDelete
-from users.views import CustomLoginView, RegisterPage
-from django.contrib.auth.views import LogoutView
+from django.urls import path, include
 
+# from core.views import (EventList, EventDetail, EventCreate, EventUpdate, EventDelete,
+#                           CustomLoginView, RegisterPage, LogoutView)
 
 urlpatterns = [
-    path('login/', CustomLoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
-    path('register/', RegisterPage.as_view(), name='register'),
-
-    path('', EventList.as_view(), name='events'),
-    path('event/<int:pk>/', EventDetail.as_view(), name='event'),
     path('admin/', admin.site.urls),
-    path('event-create', EventCreate.as_view(), name='event-create'),
-    path('event-update/<int:pk>/', EventUpdate.as_view(), name='event-update'),
-    path('event-delete/<int:pk>/', EventDelete.as_view(), name='event-delete'),
+    path('agenda/', include('core.urls')),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.jwt'))
 ]

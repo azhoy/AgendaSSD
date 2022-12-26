@@ -1,5 +1,5 @@
 <h1>New event</h1>
-<a href="{% url 'events' %}">Go back</a>
+<a href="{% url 'core' %}">Go back</a>
 <form method="POST" action="">
     {%  csrf_token %}
     {{ form.as_p}}
