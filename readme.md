@@ -174,7 +174,7 @@ curl -LX GET http://127.0.0.1:8100/agenda/member/me/ -H 'Authorization: JWT <tok
 
 ### Add an invitation to a participant
 - request: POST 
-- endpoint: /agenda/events/<event_uuid>
+- endpoint: /agenda/events/<event_uuid>/participants
 - send: 
   - Credentials: {Auth token, Key, Cred...}
   - {

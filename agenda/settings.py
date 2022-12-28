@@ -140,29 +140,39 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST options
+# REST framework options
 REST_FRAMEWORK = {
-    'COERCE_DECIMAL_TO_STRING': False,  # Auto type conversion from str to decimal
+    # Auto type conversion from str to decimal
+    'COERCE_DECIMAL_TO_STRING': False,
+    # Activate JSON Web token as default => TODO: Replace with Ayoub implementation
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
+        # Closes all the API endpoints to anonymous users excepts registration and login
         #  'rest_framework.permissions.IsAuthenticated'
     ]
 }
 
-# To send an authentication token to the server => Prefix the Token with JWT
-# JWT <token>
+
+# JSON WEB TOKEN parameters =>  TODO: Replace with Ayoub implementation
 SIMPLE_JWT = {
+    # To send an authentication token to the server => Prefix the Token with JWT
+    # JWT <token>
     'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=1)
+    # Lifetime of the JSON Web Token
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # TODO: CHANGE IN PROD !!!
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=2)  # TODO: CHANGE IN PROD !!!
 }
-# Creating a custom auth model
+# Replacing the default auth model with the modified abstract model
+# => Removes the mandatory 'email' fields when creating a user
 AUTH_USER_MODEL = 'core.User'
 
+# Djoser serializers options
 DJOSER = {
     'SERIALIZERS': {
+        # Map the auth/users endpoints to a custom user serializer
+        # => With an 'id', 'username' and 'password' fields only
         'user_create': 'core.serializers.UserCreateSerializer'
     }
 }

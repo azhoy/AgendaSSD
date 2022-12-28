@@ -8,7 +8,6 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     REQUIRED_FIELDS = []
 
-
 class Member(models.Model):
     # Link to the Django User Model
     user = models.OneToOneField(
@@ -22,12 +21,9 @@ class Member(models.Model):
     # => created_events field from Event model
 
     # => invited_events field from EventParticipant model
-
     @property
-    def get_id(self):
-        return self.id
-
-
+    def get_username(self):
+        return self.user.username
 
 
 class Event(models.Model):
@@ -49,9 +45,7 @@ class Event(models.Model):
     location = models.TextField(null=True, blank=True)
 
     # => participants field from EventParticipant model
-    @property
-    def get_id(self):
-        return self.id
+
 
 
 class EventParticipant(models.Model):
@@ -67,7 +61,23 @@ class EventParticipant(models.Model):
         # Unique constraint : Only one invited_member - event pair allowed
         unique_together = [['event', 'invited_member']]
 
+
     @property
     def get_event_id(self):
         return self.event.id
+    @property
+    def get_event_creator(self):
+        return self.event.creator.id
+
+    @property
+    def get_event_title(self):
+        return self.event.title
+
+    @property
+    def get_event_start_date(self):
+        return self.event.start_date
+
+
+
+
 
