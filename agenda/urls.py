@@ -20,8 +20,8 @@ from django.urls import path, include
 #                           CustomLoginView, RegisterPage, LogoutView)
 
 urlpatterns = [
+    path('', include('core.urls')),
     path('admin/', admin.site.urls),
-    path('agenda/', include('core.urls')),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt'))
 ]
