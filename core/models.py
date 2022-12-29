@@ -21,6 +21,8 @@ class Member(models.Model):
     # => created_events field from Event model
 
     # => invited_events field from EventParticipant model
+
+
     @property
     def get_username(self):
         return self.user.username
@@ -61,9 +63,9 @@ class EventParticipant(models.Model):
         # Unique constraint : Only one invited_member - event pair allowed
         unique_together = [['event', 'invited_member']]
 
-
     @property
     def get_event_id(self):
+        print(self.invited_member)
         return self.event.id
     @property
     def get_event_creator(self):

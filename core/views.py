@@ -12,7 +12,7 @@ from .models import Event, Member, EventParticipant
 from .serializers import (
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     MemberSerializer, UpdateMemberSerializer, OtherMemberSerializer, HideMemberSerializer,
-    EventParticipantsSerializer, UpdateEventParticipantsSerializer, HideInvitationsSerializer)
+    InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
 
 class MemberViewSet(UpdateModelMixin, GenericViewSet):
@@ -41,7 +41,7 @@ class MemberViewSet(UpdateModelMixin, GenericViewSet):
     def me(self, request):
         # Get the current profile
         # Create it and link it to the current user if it doesn't exist
-        (member, created) = Member.objects.get_or_create(user_id=request.user.id)
+        member = Member.objects.get(user_id=request.user.id)
         # Retrieve member profile information
         if request.method == 'GET':
             serializer = MemberSerializer(member)
@@ -67,7 +67,7 @@ class MemberViewSet(UpdateModelMixin, GenericViewSet):
     def update_contacts(self, request):
         # Get the current profile
         # Create it and link it to the current user if it doesn't exist
-        (member, created) = Member.objects.get_or_create(user_id=request.user.id)
+        member = Member.objects.get(user_id=request.user.id)
         # Update member profile information (contacts field)
         if request.method == 'PUT':
             serializer = UpdateMemberSerializer(member, data=request.data)
@@ -82,28 +82,59 @@ class MemberViewSet(UpdateModelMixin, GenericViewSet):
         return {'request': self.request}
 
 
-class EventParticipantsViewSet(CreateModelMixin, UpdateModelMixin, GenericViewSet):
+class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     def get_serializer_class(self):
         if self.request.method == 'PUT':
-            return UpdateEventParticipantsSerializer
+            return UpdateInvitationsSerializer
+        elif self.request.method == 'GET':
+            return InvitationsSerializer
         elif self.request.method == 'POST':
-            return EventParticipantsSerializer
+            return AddInvitationsSerializer
         return HideInvitationsSerializer
 
-    # TODO: Finish with validation from client side
-    @action(detail=False, methods=['POST'])
-    def invite_member(self, request):
-        pass
-
     def get_queryset(self):
-        print(f" kwargs content: {self.kwargs}")
-        return EventParticipant.objects.filter(event_id=self.kwargs['event_pk'])
+        member = Member.objects.get(user_id=self.request.user.id)
+        event = Event.objects.prefetch_related('creator').get(id=self.kwargs['event_pk'])
+        # A member can see the invitations of an event he created
+        if member.id == event.creator.id:
+            return EventParticipant.objects.filter(event_id=self.kwargs['event_pk'])
+        # A member can see the invitations of an event he is invited to
+        for invitation in event.participants.all():
+            if member.id == invitation.invited_member.id:
+                return EventParticipant.objects.filter(event_id=self.kwargs['event_pk'])
+
+    def update(self, request, *args, **kwargs):
+        member = Member.objects.get(user_id=request.user.id)
+        event = Event.objects.prefetch_related('creator').get(id=kwargs['event_pk'])
+        if getattr(event, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            event._prefetched_objects_cache = {}
+
+        for invitation in event.participants.all():
+            # Only the invited member can modify the status of its invitation
+            if member.id == invitation.invited_member.id:
+                serializer = self.get_serializer(invitation, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'message': 'Forbidden. NOT your invitation'})
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'event_id': self.kwargs['event_pk'],
+            'user_id': self.request.user.id,
+            'invited_member': self.request.POST.getlist('invited_member'),
+        }
 
 
 class EventViewSet(
+    ListModelMixin,
     CreateModelMixin,
+    RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,
     GenericViewSet
@@ -111,67 +142,48 @@ class EventViewSet(
     queryset = Event.objects.prefetch_related('creator').all()
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Event.objects.prefetch_related('creator').all()
+
+        member_id = Member.objects.only('id').get(user_id=user.id)
+        return Event.objects.prefetch_related('creator').filter(creator_id=member_id)
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'user_id': self.request.user.id,
+            'title': self.request.POST.getlist('title'),
+            'start_date': self.request.POST.getlist('start_date'),
+            'end_date': self.request.POST.getlist('end_date'),
+            'description': self.request.POST.getlist('description'),
+            'location': self.request.POST.getlist('location'),
+        }
+
     def get_serializer_class(self):
-        if (self.action == "my_events") or (self.action == "my_invitations"):
-            # Serializer to show the users its events
-            return EventSerializer
-        elif self.request.method == 'PUT':
-            # Serializer to show the users its events
+        if self.request.method == 'PUT':
             return UpdateEventSerializer
         elif self.request.method == 'POST':
-            # Serializer to show the users its events
             return AddEventSerializer
         else:
             # Serializer to hide events details in the endpoint for non-related user
-            return HideEventsSerializers
-
-    # TODO 1: Modify these methods with the user validation from the client
-    # Now these methods check the identity from 'request.user.id'(Forgery possible !!)
-
-    @action(detail=False, methods=['GET'])
-    def my_events(self, request):
-        # Get the current profile
-        # Create it and link it to the current user if it doesn't exist
-        (member, created) = Member.objects.get_or_create(user_id=request.user.id)
-        # Get a queryset object all events created by the current active user
-        events = Event.objects.prefetch_related('creator').filter(creator=member.id)
-        if request.method == 'GET':
-            event_list = []
-            for event in events:
-                serializer = EventSerializer(event)
-                # print(f"event serializer.data: {serializer.data}")
-                event_list.append(serializer.data)
-            return Response(event_list)
+            return EventSerializer
 
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):
-        # Get the current profile
-        # Create it and link it to the current user if it doesn't exist
-        (member, created) = Member.objects.get_or_create(user_id=request.user.id)
-        # print(f"request  data: {request.data}\n\n")
-        # print(f"request : {request.user}\n\n")
+        member = Member.objects.get(user_id=request.user.id)
         # Get a queryset object all events to which the current active user was invited to
         events = Event.objects.prefetch_related('creator').filter(participants__invited_member=member.id)
-        if request.method == 'GET':
-            event_list = []
-            for event in events:
-                serializer = EventSerializer(event)
-                # print(f"event serializer.data: {serializer.data}")
-                event_list.append(serializer.data)
-            return Response(event_list)
-
-    # TODO 2 : Finish Overriding create()
-    """
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    """
+        event_list = []
+        for event in events:
+            serializer = EventSerializer(event)
+            # print(f"event serializer.data: {serializer.data}")
+            event_list.append(serializer.data)
+        return Response(event_list)
 
     def update(self, request, *args, **kwargs):
-        (member, created) = Member.objects.get_or_create(user_id=request.user.id)
+        member = Member.objects.get(user_id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['pk'])
         if getattr(event, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
@@ -188,13 +200,10 @@ class EventViewSet(
 
     # Overriding the delete method
     def destroy(self, request, *args, **kwargs):
-        (member, created) = Member.objects.get_or_create(user_id=request.user.id)
+        member = Member.objects.get(user_id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['pk'])
         # Only the creator of an event can delete this event
         if member.id == event.creator.id:
             event.delete()
             return Response({'message': 'Event deleted'}, status=status.HTTP_204_NO_CONTENT)
         return Response({'message': 'Forbidden. NOT your event'})
-
-    def get_serializer_context(self):
-        return {'request': self.request}

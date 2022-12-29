@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework import serializers
 from core.models import Member, Event, EventParticipant
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
@@ -29,7 +31,7 @@ class InvitedEventsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EventParticipant
-        fields = ['event_id',  'title', 'start_date']
+        fields = ['event_id', 'title', 'start_date']
 
 
 # Sub serializer for the 'created_events'field in the MemberSerializer
@@ -89,23 +91,29 @@ class OtherMemberSerializer(serializers.ModelSerializer):
 # Invitations serializers
 # ====
 
-class EventParticipantsSerializer(serializers.ModelSerializer):
+class InvitationsSerializer(serializers.ModelSerializer):
     invitation_id = serializers.UUIDField(source='id', read_only=True)
-    event_id = serializers.UUIDField(source='event.id')
-    member_invited = serializers.UUIDField(source='invited_member.get_username')
+    event_id = serializers.UUIDField(source='event.id', read_only=True)
+    event_title = serializers.UUIDField(source='event.title', read_only=True)
+    event_start_date = serializers.UUIDField(source='event.start_date', read_only=True)
+    member_invited = serializers.UUIDField(source='invited_member.get_username', read_only=True)
 
     class Meta:
         model = EventParticipant
         fields = [
             'invitation_id',
             'event_id',
+            'event_title',
+            'event_start_date',
             'member_invited',
         ]
 
 
-class UpdateEventParticipantsSerializer(serializers.ModelSerializer):
+class UpdateInvitationsSerializer(serializers.ModelSerializer):
     member_invited = serializers.UUIDField(source='invited_member.get_username', read_only=True)
-    event_id = serializers.UUIDField(source='event', read_only=True)
+    event_id = serializers.UUIDField(source='event.id', read_only=True)
+    event_title = serializers.UUIDField(source='event.title', read_only=True)
+    event_start_date = serializers.UUIDField(source='event.start_date', read_only=True)
     invitation_id = serializers.UUIDField(source='id', read_only=True)
 
     class Meta:
@@ -113,9 +121,30 @@ class UpdateEventParticipantsSerializer(serializers.ModelSerializer):
         fields = [
             'invitation_id',
             'event_id',
+            'event_title',
+            'event_start_date',
             'member_invited',
             'acceptedStatus'
         ]
+
+
+class AddInvitationsSerializer(serializers.Serializer):
+    invited_member = serializers.UUIDField()
+
+    def save(self, **kwargs):
+        event = Event.objects.prefetch_related('creator').get(id=self.context['event_id'])
+        invited_member = Member.objects.get(id=self.context['invited_member'][0])
+        active_member = Member.objects.get(user_id=self.context['user_id'])
+        # If the active member is the creator of the event
+        if event.creator.id == active_member.id:
+            # TODO 1: Add a contdition to check if the member exist
+            # TODO 2: Add another condition with the contact list
+            # Save the event
+            invitation = EventParticipant.objects.create(
+                event=event,
+                invited_member=invited_member,
+            )
+
 
 
 # ====
@@ -126,7 +155,7 @@ class UpdateEventParticipantsSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     event_id = serializers.UUIDField(source='id', read_only=True)
     creator_username = serializers.CharField(source='creator.get_username', read_only=True)
-    participants = EventParticipantsSerializer(many=True, read_only=True)
+    participants = InvitationsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Event
@@ -140,13 +169,12 @@ class EventSerializer(serializers.ModelSerializer):
             'location',
             'participants'
         ]
-
 
 
 class UpdateEventSerializer(serializers.ModelSerializer):
     event_id = serializers.UUIDField(source='id', read_only=True)
     creator_username = serializers.CharField(source='creator.get_username', read_only=True)
-    participants = EventParticipantsSerializer(many=True, read_only=True)
+    participants = InvitationsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Event
@@ -160,26 +188,32 @@ class UpdateEventSerializer(serializers.ModelSerializer):
             'location',
             'participants'
         ]
-class AddEventSerializer(serializers.ModelSerializer):
-    event_id = serializers.UUIDField(source='id', read_only=True)
-
-    class Meta:
-        model = Event
-        fields = [
-            'event_id',
-            'creator',
-            'title',
-            'start_date',
-            'end_date',
-            'description',
-            'location',
-        ]
-
-    def create(self, validated_data):
-        return Event.objects.create(**validated_data)
 
 
-# ====
+class AddEventSerializer(serializers.Serializer):
+    title = serializers.CharField()
+    start_date = serializers.CharField()
+    end_date = serializers.CharField(allow_blank=True, allow_null=True)
+    description = serializers.CharField(allow_blank=True, allow_null=True)
+    location = serializers.CharField(allow_blank=True, allow_null=True)
+
+    def save(self, **kwargs):
+        # Get the member profile
+
+        member = Member.objects.get(user_id=self.context['user_id'])
+        # Save the event
+        Event.objects.create(
+            creator=member,
+            title=self.context['title'][0],
+            start_date=self.context['start_date'][0],
+            end_date=self.context['end_date'][0],
+            description=self.context['description'][0],
+            location=self.context['location'][0],
+        )
+
+    # ====
+
+
 # Hidden serializers
 # ====
 
@@ -189,19 +223,16 @@ class HideEventsSerializers(serializers.ModelSerializer):
         fields = [
         ]
 
-class HideMemberSerializer(serializers.ModelSerializer):
 
+class HideMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = [
         ]
 
-class HideInvitationsSerializer(serializers.ModelSerializer):
 
+class HideInvitationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventParticipant
         fields = [
         ]
-
-
-
