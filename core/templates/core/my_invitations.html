@@ -1,0 +1,27 @@
+<html><body>
+<h1>My invitations to others events</h1>
+{% for event in events %}
+    <h2>Event title: {{ event.title }}</h2>
+<ul>
+    <li>Event id: {{ event.event_id }}</li>
+    <li>Creator: {{ event.creator_username }}</li>
+    <li>Start date: {{ event.start_date }}</li>
+    <li>End date: {{ event.end_date }}</li>
+    <li>Description: {{ event.description }}</li>
+    <li>Location: {{ event.location }}</li>
+    <h3>Invited members</h3>
+    {% for invitation in event.invited %}
+    <li>member: {{ invitation.member_invited }}</li>
+        <ul>
+           <li>acceptedStatus: {{ invitation.acceptedStatus }}</li>
+        </ul>
+    {% endfor %}
+</ul>
+{% endfor %}
+
+   <br>
+     <p> <a href="{% url 'core:users-me' %}">My account</a></p>
+   <br>
+     <p> <a href="{% url 'core:events-list' %}">My events</a></p>
+   <br>
+</body></html>

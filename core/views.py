@@ -1,85 +1,90 @@
+from django.shortcuts import render
+from djoser.views import UserViewSet
+from djoser.conf import settings as djoser_settings
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin,
     RetrieveModelMixin, UpdateModelMixin,
     DestroyModelMixin)
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
-from .models import Event, Member, EventParticipant
+from .models import Event, User, Invitation
 from .serializers import (
+    UpdateContactSerializer, HideUserSerializer,
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
-    MemberSerializer, UpdateMemberSerializer, OtherMemberSerializer, HideMemberSerializer,
     InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
 
-class MemberViewSet(UpdateModelMixin, GenericViewSet):
-    queryset = Member.objects.all()
+class CustomUserViewSet(UserViewSet):
 
-    # All actions in this class are not available to unauthenticated users
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == "create":
+            self.permission_classes = djoser_settings.PERMISSIONS.user_create  # ["rest_framework.permissions.AllowAny"]
+        elif self.action == "list":
+            self.permission_classes = djoser_settings.PERMISSIONS.user_list  # ["djoser.permissions.CurrentUserOrAdmin"]
+        elif self.action == "set_password":
+            self.permission_classes = djoser_settings.PERMISSIONS.set_password  # ["djoser.permissions.CurrentUserOrAdmin"]
+        elif self.action == "set_username":
+            self.permission_classes = djoser_settings.PERMISSIONS.set_username  # ["djoser.permissions.CurrentUserOrAdmin"]
+        return super().get_permissions()
 
     def get_serializer_class(self):
-        if self.action == "me":
-            # Serializer for "my profile page"
-            return MemberSerializer
-        elif self.action == "update_contacts":
-            # Serializer to update contact field
-            return UpdateMemberSerializer
-        elif self.action == "everybody":
-            # Serializer to update contact field
-            return OtherMemberSerializer
-        else:
-            # Serializer to see other member profile
-            return HideMemberSerializer
+        if self.action == "create":
+            if djoser_settings.USER_CREATE_PASSWORD_RETYPE:
+                return djoser_settings.SERIALIZERS.user_create_password_retype
+            return djoser_settings.SERIALIZERS.user_create  # core.serializers.UserCreateSerializer
+        elif self.action == "set_password":
+            if djoser_settings.SET_PASSWORD_RETYPE:
+                return djoser_settings.SERIALIZERS.set_password_retype
+            return djoser_settings.SERIALIZERS.set_password
+        elif self.action == "set_username":
+            if djoser_settings.SET_USERNAME_RETYPE:
+                return djoser_settings.SERIALIZERS.set_username_retype
+            return djoser_settings.SERIALIZERS.set_username
+        elif self.action == "me":
+            return djoser_settings.SERIALIZERS.current_user
+        elif self.action == "update_contact":
+            return UpdateContactSerializer
 
-    # detail=False: Action available on the list view
-    # detail=True: Action available on the detail view
-    @action(detail=False, methods=['GET'])
-    def me(self, request):
-        # Get the current profile
-        # Create it and link it to the current user if it doesn't exist
-        member = Member.objects.get(user_id=request.user.id)
-        # Retrieve member profile information
-        if request.method == 'GET':
-            serializer = MemberSerializer(member)
-            # print(f"serializer.data: {serializer.data}")
-            return Response(serializer.data)
+        return HideUserSerializer
 
-    # Usernames of others member exposed
-    @action(detail=False, methods=['GET'])
-    def everybody(self, request):
-        # Get the current profile
-        # Create it and link it to the current user if it doesn't exist
-        members = Member.objects.all()
-        # Retrieve all members profile information
-        if request.method == 'GET':
-            member_list = []
-            for member in members:
-                serializer = OtherMemberSerializer(member)
-                # print(f"event serializer.data: {serializer.data}")
-                member_list.append(serializer.data)
-            return Response(member_list)
+    # Override the '/users/me/' to prevent the modification of 'protected_symmetric_key' field by a user
+    # The authenticated user can only retrieve its information
+    @action(["get"], detail=False)
+    def me(self, request, *args, **kwargs):
+        self.get_object = self.get_instance
+        if request.method == "GET":
+            return self.retrieve(request, *args, **kwargs)
 
-    @action(detail=False, methods=['PUT'])
-    def update_contacts(self, request):
-        # Get the current profile
-        # Create it and link it to the current user if it doesn't exist
-        member = Member.objects.get(user_id=request.user.id)
-        # Update member profile information (contacts field)
-        if request.method == 'PUT':
-            serializer = UpdateMemberSerializer(member, data=request.data)
-            # print(f"request.data: {request.data}")
-            # print(f"request.user: {request.user.id}")
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            #  print(f"serializer.data: {serializer.data}")
-            return Response(serializer.data)
+    # Overriding all the unnecessary actions from djoser user
+    @action(["get"], detail=False)
+    def activation(self, request, *args, **kwargs):
+        return Response({"Message": "No content"})
 
-    def get_serializer_context(self):
-        return {'request': self.request}
+    @action(["get"], detail=False)
+    def resend_activation(self, request, *args, **kwargs):
+        return Response({"Message": "No content"})
+
+    @action(["get"], detail=False)
+    def reset_username(self, request, *args, **kwargs):
+        return Response({"Message": "No content"})
+
+    @action(["get"], detail=False)
+    def reset_username_confirm(self, request, *args, **kwargs):
+        return Response({"Message": "No content"})
+
+    @action(["get"], detail=False)
+    def reset_password(self, request, *args, **kwargs):
+        return Response({"Message": "No content"})
+
+    @action(["get"], detail=False)
+    def reset_password_confirm(self, request, *args, **kwargs):
+        return Response({"Message": "No content"})
 
 
 class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
@@ -95,27 +100,27 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
         return HideInvitationsSerializer
 
     def get_queryset(self):
-        member = Member.objects.get(user_id=self.request.user.id)
+        member = User.objects.get(id=self.request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=self.kwargs['event_pk'])
         # A member can see the invitations of an event he created
         if member.id == event.creator.id:
-            return EventParticipant.objects.filter(event_id=self.kwargs['event_pk'])
+            return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
         # A member can see the invitations of an event he is invited to
-        for invitation in event.participants.all():
-            if member.id == invitation.invited_member.id:
-                return EventParticipant.objects.filter(event_id=self.kwargs['event_pk'])
+        for invitation in event.invited.all():
+            if member.id == invitation.member_invited.id:
+                return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
 
     def update(self, request, *args, **kwargs):
-        member = Member.objects.get(user_id=request.user.id)
+        member = User.objects.get(id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['event_pk'])
         if getattr(event, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
             # forcibly invalidate the prefetch cache on the instance.
             event._prefetched_objects_cache = {}
 
-        for invitation in event.participants.all():
+        for invitation in event.invited.all():
             # Only the invited member can modify the status of its invitation
-            if member.id == invitation.invited_member.id:
+            if member.id == invitation.member_invited.id:
                 serializer = self.get_serializer(invitation, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 self.perform_update(serializer)
@@ -127,7 +132,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
             'request': self.request,
             'event_id': self.kwargs['event_pk'],
             'user_id': self.request.user.id,
-            'invited_member': self.request.POST.getlist('invited_member'),
+            'member_invited': self.request.POST.getlist('member_invited'),
         }
 
 
@@ -142,18 +147,21 @@ class EventViewSet(
     queryset = Event.objects.prefetch_related('creator').all()
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
+
+
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
             return Event.objects.prefetch_related('creator').all()
 
-        member_id = Member.objects.only('id').get(user_id=user.id)
+        member_id = User.objects.only('id').get(id=user.id)
         return Event.objects.prefetch_related('creator').filter(creator_id=member_id)
 
     def get_serializer_context(self):
         return {
             'request': self.request,
             'user_id': self.request.user.id,
+            'protected_event_key': self.request.POST.getlist('protected_event_key'),
             'title': self.request.POST.getlist('title'),
             'start_date': self.request.POST.getlist('start_date'),
             'end_date': self.request.POST.getlist('end_date'),
@@ -172,18 +180,19 @@ class EventViewSet(
 
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):
-        member = Member.objects.get(user_id=request.user.id)
+        member = User.objects.get(id=request.user.id)
         # Get a queryset object all events to which the current active user was invited to
-        events = Event.objects.prefetch_related('creator').filter(participants__invited_member=member.id)
+        events = Event.objects.prefetch_related('creator').filter(invited__member_invited=member.id)
         event_list = []
         for event in events:
             serializer = EventSerializer(event)
             # print(f"event serializer.data: {serializer.data}")
             event_list.append(serializer.data)
-        return Response(event_list)
+        # return Response(event_list)
+        return Response({'events': event_list}, template_name='my_invitations.html')
 
     def update(self, request, *args, **kwargs):
-        member = Member.objects.get(user_id=request.user.id)
+        member = User.objects.get(id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['pk'])
         if getattr(event, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
@@ -200,7 +209,7 @@ class EventViewSet(
 
     # Overriding the delete method
     def destroy(self, request, *args, **kwargs):
-        member = Member.objects.get(user_id=request.user.id)
+        member = User.objects.get(id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['pk'])
         # Only the creator of an event can delete this event
         if member.id == event.creator.id:

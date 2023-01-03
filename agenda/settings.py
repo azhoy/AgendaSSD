@@ -59,11 +59,13 @@ INTERNAL_IPS = [
 ]
 
 ROOT_URLCONF = 'agenda.urls'
+TEMPLATE_CORE_DIR = BASE_DIR / 'core' / 'templates' / 'core'
 
+# TEMPLATE_DIRS = [TEMPLATE_CORE_DIR]
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMPLATE_CORE_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -151,6 +153,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         # Closes all the API endpoints to anonymous users excepts registration and login
         #  'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',  # TODO: Remove in production
     ]
 }
 
@@ -164,15 +170,16 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # TODO: CHANGE IN PROD !!!
     'REFRESH_TOKEN_LIFETIME': timedelta(days=2)  # TODO: CHANGE IN PROD !!!
 }
-# Replacing the default auth model with the modified abstract model
-# => Removes the mandatory 'email' fields when creating a user
+# Replacing the default auth model with the modified abstract model from models.py
+# https://docs.djangoproject.com/en/4.1/topics/auth/customizing/#substituting-a-custom-user-model
 AUTH_USER_MODEL = 'core.User'
 
 # Djoser serializers options
 DJOSER = {
     'SERIALIZERS': {
-        # Map the auth/users endpoints to a custom user serializer
-        # => With an 'id', 'username' and 'password' fields only
-        'user_create': 'core.serializers.UserCreateSerializer'
+        # Custom User Serializers with 'id', 'username', 'password' and 'protected_symmetric_key' fields
+        'user_create': 'core.serializers.UserCreateSerializer',
+        'user': 'core.serializers.UserSerializer',
+        'current_user': 'core.serializers.UserSerializer',
     }
 }
