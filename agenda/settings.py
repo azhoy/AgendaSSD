@@ -167,8 +167,8 @@ SIMPLE_JWT = {
     # JWT <token>
     'AUTH_HEADER_TYPES': ('JWT',),
     # Lifetime of the JSON Web Token
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # TODO: CHANGE IN PROD !!!
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=2)  # TODO: CHANGE IN PROD !!!
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=6)  # TODO: CHANGE IN PROD !!!
 }
 # Replacing the default auth model with the modified abstract model from models.py
 # https://docs.djangoproject.com/en/4.1/topics/auth/customizing/#substituting-a-custom-user-model

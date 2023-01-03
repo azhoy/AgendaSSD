@@ -154,21 +154,24 @@ class UpdateInvitationsSerializer(serializers.ModelSerializer):
 
 
 class AddInvitationsSerializer(serializers.Serializer):
-    member_invited = serializers.UUIDField()
+    username_to_invite = serializers.CharField()
 
     def save(self, **kwargs):
         event = Event.objects.prefetch_related('creator').get(id=self.context['event_id'])
-        member_invited = User.objects.get(id=self.context['member_invited'][0])
+        member_invited = User.objects.get(username=self.context['username_to_invite'][0])
         active_member = User.objects.get(id=self.context['user_id'])
-        # If the active member is the creator of the event
+        # If the users to invite exists
+        #if User.objects.filter(username=self.context['username_to_invite'][0]).exists():
+            # If the active member is the creator of the event
         if event.creator.id == active_member.id:
-            # TODO 1: Add a contdition to check if the member exist
             # TODO 2: Add another condition with the contact list
             # Save the event
             Invitation.objects.create(
                 event=event,
                 member_invited=member_invited,
             )
+        #else:
+            #print('this user doesnt exist')
 
 
 class HideInvitationsSerializer(serializers.ModelSerializer):

@@ -14,7 +14,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from .models import Event, User, Invitation
 from .serializers import (
-    UpdateContactSerializer, HideUserSerializer,
+    UpdateContactSerializer, HideUserSerializer, OtherUserSerializer,
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
@@ -48,6 +48,8 @@ class CustomUserViewSet(UserViewSet):
             return djoser_settings.SERIALIZERS.set_username
         elif self.action == "me":
             return djoser_settings.SERIALIZERS.current_user
+        elif self.action == "all_users":
+            return djoser_settings.SERIALIZERS.current_user
         elif self.action == "update_contact":
             return UpdateContactSerializer
 
@@ -60,6 +62,16 @@ class CustomUserViewSet(UserViewSet):
         self.get_object = self.get_instance
         if request.method == "GET":
             return self.retrieve(request, *args, **kwargs)
+
+    @action(["get"], detail=False)
+    def all_users(self, request, *args, **kwargs):
+        all_users = User.objects.all()
+        if request.method == "GET":
+            username_list = []
+            for username in all_users:
+                serializer = OtherUserSerializer(username)
+                username_list.append(serializer.data)
+            return Response(username_list)
 
     # Overriding all the unnecessary actions from djoser user
     @action(["get"], detail=False)
@@ -132,7 +144,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
             'request': self.request,
             'event_id': self.kwargs['event_pk'],
             'user_id': self.request.user.id,
-            'member_invited': self.request.POST.getlist('member_invited'),
+            'username_to_invite': self.request.POST.getlist('username_to_invite'),
         }
 
 

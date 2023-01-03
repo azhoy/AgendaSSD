@@ -12,39 +12,41 @@
   - email
   - username
   - password
-  - public key
-  - protected private key
-  - protected symmetric key
+  - public_key
+  - protected_private_key
+  - protected_symmetric_key
 - **Response**
   - HTTP_201_CREATED
     - email
     - id
     - username
-    - public key
-    - protected private key 
-    - protected symmetric key
+    - public_key
+    - protected_private_key
+    - protected_symmetric_key
   - HTTP_400_BAD_REQUEST
       - email
       - id
       - username
-      - public key
-      - protected private key 
-      - protected symmetric key
+      - public_key
+      - protected_private_key
+      - protected_symmetric_key
       - password
   
-### Retrieve the authenticated user  (Authenticated in the header) 
+### Retrieve the authenticated user 
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /users/me
 - **Method A**:GET 
 - **Request A**:
-
 - **Response A**
   - HTTP_200_OK
     - user id 
     - email
     - username
-    - public key
-    - protected private key
-    - protected symmetric key
+    - public_key
+    - protected_private_key
+    - protected_symmetric_key
     - event created list
     - event invited to list
     - contact list
@@ -86,6 +88,9 @@
 
 ### Change email
 (TODO: Send confirmation link to email + SET_USERNAME_RETYPE = True)
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /users/set_email/
 - **Method**: POST
 - **Request**:
@@ -99,7 +104,9 @@
     
 ### Change password 
 (TODO: Send confirmation link to email + SET_PASSWORD_RETYPE = True)
-
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /users/set_password/
 - **Method**: POST
 - **Request**:
@@ -114,6 +121,9 @@
     - current_password
 
 ### Add an event
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /agenda/events/
 - **Method**: POST
 - **Request**:
@@ -135,6 +145,9 @@
       - non_fields_errors
 
 ### Update an event (Need to be the creator of the event)
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /agenda/events/<event_id>
 - **Method**: PUT
 - **Request**:
@@ -155,6 +168,9 @@
       - non_fields_errors
       - 
 ### Delete an event (Need to be the creator of the event)
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /agenda/events/<event_id>
 - **Method**: DELETE
 - **Request**:
@@ -164,6 +180,9 @@
     - "message": "Event deleted"
 
 ### List of events I created
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /agenda/events/
 - **Method**: GET
 - **Request**:
@@ -174,6 +193,9 @@
 
     
 ### List of events I was invited to 
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /agenda/events/my_invitations/
 - **Method**: GET
 - **Request**:
@@ -183,17 +205,27 @@
     - List of events
 
 ### Invite a member to my event (Need to be the creator of the event)
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
 - **URL**: /agenda/events/<event_id>/invitations/
 - **Method**: POST
 - **Response**
   - HTTP 201 Created
     -  "member_invited":
     
-### Respond to an invitation (Need to be the member invited of the invitation) 
-- **URL**: /agenda/events/<event_id>/invitations/
-- **Method**: POST
+### Respond to an invitation (Need to be the member invited of the invitation)
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
+- **URL**: /agenda/events/<event_id>/invitations/<invitation_id>
+- **Method**: PUT
 - **Request**:
   - acceptedStatus (text instead of bool)
 - **Response**
   - HTTP 201 Created
     -  "member_invited":
+
+## TODO
+### Secure Access with JWT (+ Find best time limit)
+### 
