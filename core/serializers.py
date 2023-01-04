@@ -258,6 +258,8 @@ class AddInvitationsSerializer(serializers.Serializer):
                     creator_contact_list = ContactList(user_id=self.context['user_id'])
                     creator_contact_list.save()
 
+
+                """
                 # Accessing all the contacts of the creator
                 creator_contacts = creator_contact_list.contacts.all()
 
@@ -265,6 +267,15 @@ class AddInvitationsSerializer(serializers.Serializer):
                 if event.creator.id == active_member.id:
                     # If the member invited is in the contact list (change with username if proble
                     if member_invited.id in creator_contacts:
+                        Invitation.objects.create(
+                            event=event,
+                            member_invited=member_invited,
+                        )
+                """
+                # If the active user is the creator of the event
+                if event.creator.id == active_member.id:
+                    # If the invited member is in the contact list of the creator of the event
+                    if creator_contact_list.is_mutual_contact(member_invited):
                         Invitation.objects.create(
                             event=event,
                             member_invited=member_invited,
