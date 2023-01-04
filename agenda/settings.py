@@ -26,10 +26,9 @@ SECRET_KEY = 'django-insecure-x443m1!zfpcc(!rk@&fis+h9yjv=mj9*pq--0vxd&)jpkl@y9*
 DEBUG = True  # TODO: Remove debug in production
 
 # A list of strings representing the host/domain names that this Django site can serve.
-ALLOWED_HOSTS = []  #
+ALLOWED_HOSTS = []  # TODO: Set in production
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,8 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',  # 3rd
-    'djoser',  # 3rd
+    'rest_framework',
+    'djoser',
     'core',
 ]
 
@@ -54,13 +53,11 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = 'agenda.urls'
-TEMPLATE_CORE_DIR = BASE_DIR / 'core' / 'templates' / 'core'
 
-# TEMPLATE_DIRS = [TEMPLATE_CORE_DIR]
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATE_CORE_DIR],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -77,14 +74,7 @@ WSGI_APPLICATION = 'agenda.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-"""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -105,6 +95,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 12,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -132,6 +125,7 @@ LOGIN_URL = 'login'
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
@@ -151,7 +145,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',  # TODO: Remove in production
     ]
 }
 
