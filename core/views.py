@@ -271,7 +271,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
 
 
 class EventViewSet(
-    ListModelMixin,
+    # ListModelMixin,
     CreateModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
@@ -313,15 +313,22 @@ class EventViewSet(
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):
         member = User.objects.get(id=request.user.id)
-        # Get a queryset object all events to which the current active user was invited to
         events = Event.objects.prefetch_related('creator').filter(invited__member_invited=member.id)
-        event_list = []
+        event_dict = {}
         for event in events:
             serializer = EventSerializer(event)
-            # print(f"event serializer.data: {serializer.data}")
-            event_list.append(serializer.data)
-        # return Response(event_list)
-        return Response({'events': event_list})
+            event_dict[f'{event.id}'] = serializer.data
+        return Response(event_dict)
+
+    @action(detail=False, methods=['GET'])
+    def my_events(self, request):
+        member = User.objects.get(id=request.user.id)
+        events = Event.objects.prefetch_related('creator').filter(creator_id=member.id)
+        event_dict = {}
+        for event in events:
+            serializer = EventSerializer(event)
+            event_dict[f'{event.id}'] = serializer.data
+        return Response(event_dict)
 
     def update(self, request, *args, **kwargs):
         member = User.objects.get(id=request.user.id)
