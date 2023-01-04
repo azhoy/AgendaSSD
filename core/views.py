@@ -12,12 +12,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
-from .models import Event, User, Invitation, ContactList
+from .models import Event, User, Invitation, ContactList, ContactRequest
 from .serializers import (
-    ContactSerializer, AddContactSerializer,HideContactSerializer,
-    HideUserSerializer, OtherUserSerializer,
+    ContactSerializer, AddContactRequestSerializer, ContactRequestSerializer, HideContactSerializer,
+    AcceptContactSerializer,DeleteContactSerializer,  HideUserSerializer, OtherUserSerializer,
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
+
 
 # ####################################################################################################@
 # User Viewsets
@@ -68,6 +69,7 @@ class CustomUserViewSet(UserViewSet):
         if request.method == "GET":
             return self.retrieve(request, *args, **kwargs)
 
+    """
     # List the usernames of all users
     @action(["get"], detail=False)
     def all_users(self, request, *args, **kwargs):
@@ -78,7 +80,7 @@ class CustomUserViewSet(UserViewSet):
                 serializer = OtherUserSerializer(username)
                 username_list.append(serializer.data)
             return Response(username_list)
-
+    """
 
     # Overriding all the unnecessary actions from the djoser package
     @action(["get"], detail=False)
@@ -105,18 +107,20 @@ class CustomUserViewSet(UserViewSet):
     def reset_password_confirm(self, request, *args, **kwargs):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+
 # ####################################################################################################@
 # Contacts Viewset
 # ####################################################################################################@
 
-class ContactViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
-
+class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
+    # Get => See my contact list
     def get_queryset(self):
         user = self.request.user
         member_id = User.objects.only('id').get(id=user.id)
         return ContactList.objects.filter(user_id=member_id)
+
     def get_serializer_context(self):
         return {
             'request': self.request,
@@ -128,29 +132,57 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Generic
         if self.request.method == 'GET':
             return ContactSerializer
         elif self.request.method == 'POST':
-            return AddContactSerializer
+            return AddContactRequestSerializer
         return HideContactSerializer
 
-    # Send a contact request
-    @action(["get"], detail=False)
-    def my_contacts(self, request, *args, **kwargs):
-        contact_list = []
-        try:
-            contact_list = ContactList.objects.get(user_id=request.user.id).contacts.all()
-        except Exception as e:
-            print(f'{e}')
-        if request.method == "GET":
-            my_contacts = []
-            for contact in contact_list:
-                serializer = ContactSerializer(contact)
-                my_contacts.append(serializer.data)
-            return Response(my_contacts)
 
-    @action(["post"], detail=False)
-    def contact_request(self, request, *args, **kwargs):
+class ContactRequestViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
+    # Get => See my contact list
+    def get_queryset(self):
         user = self.request.user
-        # if request.method == "POST":
-        #    pass
+        contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
+        print(contact_requests)
+        return contact_requests
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'user_id': self.request.user.id,
+            'username_to_accept': self.request.POST.getlist('username_to_accept')
+        }
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return ContactRequestSerializer
+        elif self.request.method == 'POST':
+            return AcceptContactSerializer
+        return HideContactSerializer
+
+class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
+    # Get => See my contact list
+    def get_queryset(self):
+        user = self.request.user
+        contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
+        print(contact_requests)
+        return contact_requests
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'user_id': self.request.user.id,
+            'username_to_delete': self.request.POST.getlist('username_to_delete')
+        }
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return DeleteContactSerializer
+        return HideContactSerializer
+
+
 
 # ####################################################################################################@
 # Invitation Viewset
@@ -206,6 +238,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
             'user_id': self.request.user.id,
             'username_to_invite': self.request.POST.getlist('username_to_invite'),
         }
+
 
 # ####################################################################################################@
 # Event Viewsets

@@ -92,7 +92,7 @@ class ContactSerializer(serializers.ModelSerializer):
         ]
 
 
-class AddContactSerializer(serializers.Serializer):
+class AddContactRequestSerializer(serializers.Serializer):
     username_to_add = serializers.CharField()
 
     def save(self, **kwargs):
@@ -100,29 +100,90 @@ class AddContactSerializer(serializers.Serializer):
         # Getting the sender of the friend request user object
         active_member = User.objects.get(id=self.context['user_id'])
         # Getting the receiver of the friend request user object
-        receiver = User.objects.get(username=self.context['username_to_add'][0])
         try:
-            # Get any friend request active and not active between these 2
-            contact_request = ContactRequest.objects.filter(sender=active_member, receiver=receiver)
-            # Find if any contact request is active
+            receiver = User.objects.get(username=self.context['username_to_add'][0])
             try:
-                for request in contact_request:
-                    if request.is_active:
-                        raise Exception("You already sent a contact request.")
-                # If none are active, then create a new friend request
+                # Get any friend request active and not active between these 2
+                contact_request = ContactRequest.objects.filter(sender=active_member, receiver=receiver)
+                # Find if any contact request is active
+                try:
+                    for request in contact_request:
+                        if request.is_active:
+                            raise Exception("You already sent a contact request.")
+                    # If none are active, then create a new friend request
+                    contact_request = ContactRequest(sender=active_member, receiver=receiver)
+                    contact_request.save()
+                    payload['response'] = "Friend request sent."
+                except Exception as e:
+                    payload['response'] = f"{e}"
+            except ContactRequest.DoesNotExist:
+                # This user has never sent a friend request => Create one
                 contact_request = ContactRequest(sender=active_member, receiver=receiver)
                 contact_request.save()
                 payload['response'] = "Friend request sent."
-            except Exception as e:
-                payload['response'] = f"{e}"
-        except ContactRequest.DoesNotExist:
-            # This user has never sent a friend request => Create one
-            contact_request = ContactRequest(sender=active_member, receiver=receiver)
-            contact_request.save()
-            payload['response'] = "Friend request sent."
+        except Exception as e:
+            print(e)
 
-        if payload['response'] is None:
-            payload['response'] = "Something went wrong. (ADC)"
+
+# ####################################################################################################@
+# Contact Request Serializers
+# ####################################################################################################@
+
+class ContactRequestSerializer(serializers.ModelSerializer):
+    sender = serializers.CharField(source='sender.username', read_only=True)
+    receiver = serializers.CharField(source='receiver.username', read_only=True)
+
+    class Meta:
+        model = ContactRequest
+        fields = [
+            'sender',
+            'receiver',
+            'is_active'
+        ]
+
+class AcceptContactSerializer(serializers.Serializer):
+    username_to_accept = serializers.CharField()
+
+    def save(self, **kwargs):
+        payload = {}
+        # Getting the receiver of the friend request user object == active user
+        active_user = User.objects.get(id=self.context['user_id'])
+        # Getting the receiver of the friend request user object
+        try:
+            print("AAA")
+
+            sender = User.objects.get(username=self.context['username_to_accept'][0])
+            try:
+                print("BBB")
+                # Get any friend request active and not active between these 2
+                contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
+                contact_request.accept()
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            print(e)
+
+
+class DeleteContactSerializer(serializers.Serializer):
+    username_to_delete = serializers.CharField()
+
+    def save(self, **kwargs):
+        payload = {}
+        # Getting the sender of the friend request user object
+        active_member = User.objects.get(id=self.context['user_id'])
+        # Getting the receiver of the friend request user object
+        try:
+            removee = User.objects.get(username=self.context['username_to_delete'][0])
+            try:
+                # Get any friend request active and not active between these 2
+                contact_list = ContactList.objects.get(user=active_member)
+                contact_list.unfriend(removee=removee)
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            print(e)
+
+
 class HideContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactList

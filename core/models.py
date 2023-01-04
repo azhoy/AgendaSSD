@@ -71,8 +71,7 @@ class ContactList(models.Model):
         related_name='friends'
     )
 
-    def __str__(self):
-        return self.user.username
+
 
     def add_contact(self, username_to_add):
         """
@@ -143,11 +142,11 @@ class ContactRequest(models.Model):
         Accept a contact request
         Update both SENDER and RECEIVER contact list
         """
-        receiver_contact_list = ContactList.objects.get(user=self.receiver)
+        (receiver_contact_list, created) = ContactList.objects.get_or_create(user=self.receiver)
         # If it exists
         if receiver_contact_list:
             receiver_contact_list.add_contact(self.sender)
-            sender_contact_list = ContactList.objects.get(user=self.sender)
+            (sender_contact_list, created) = ContactList.objects.get_or_create(user=self.sender)
             if sender_contact_list:
                 sender_contact_list.add_contact(self.receiver)
                 self.is_active = False
