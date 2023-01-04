@@ -15,7 +15,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from .models import Event, User, Invitation, ContactList, ContactRequest
 from .serializers import (
     ContactSerializer, AddContactRequestSerializer, ContactRequestSerializer, HideContactSerializer,
-    AcceptContactSerializer,DeleteContactSerializer,  HideUserSerializer, OtherUserSerializer,
+    AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer, OtherUserSerializer,
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
@@ -136,7 +136,7 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
         return HideContactSerializer
 
 
-class ContactRequestViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Get => See my contact list
@@ -160,6 +160,32 @@ class ContactRequestViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, 
             return AcceptContactSerializer
         return HideContactSerializer
 
+
+class ContactDeclineViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
+    # Get => See my contact list
+    def get_queryset(self):
+        user = self.request.user
+        contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
+        print(contact_requests)
+        return contact_requests
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'user_id': self.request.user.id,
+            'username_to_decline': self.request.POST.getlist('username_to_decline')
+        }
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return ContactRequestSerializer
+        elif self.request.method == 'POST':
+            return DeclineContactSerializer
+        return HideContactSerializer
+
+
 class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
@@ -181,7 +207,6 @@ class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
         if self.request.method == 'POST':
             return DeleteContactSerializer
         return HideContactSerializer
-
 
 
 # ####################################################################################################@

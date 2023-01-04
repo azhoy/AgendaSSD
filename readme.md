@@ -145,7 +145,7 @@
   - HTTP_200_OK
     - List of contacts requests
     
-### Accept contact request
+#### Accept contact request
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -156,6 +156,18 @@
 - **Response**
   - HTTP_201_CREATED
     - username_to_accept 
+    
+#### Decline contact request
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
+- **URL**: /agenda/
+- **Method**: POST
+- **Request**:
+  - username_to_decline
+- **Response**
+  - HTTP_201_CREATED
+    - username_to_decline 
     
 #### Delete a contact 
 - **Header** : 

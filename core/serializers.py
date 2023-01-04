@@ -150,14 +150,30 @@ class AcceptContactSerializer(serializers.Serializer):
         active_user = User.objects.get(id=self.context['user_id'])
         # Getting the receiver of the friend request user object
         try:
-            print("AAA")
-
             sender = User.objects.get(username=self.context['username_to_accept'][0])
             try:
-                print("BBB")
                 # Get any friend request active and not active between these 2
                 contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
                 contact_request.accept()
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            print(e)
+
+class DeclineContactSerializer(serializers.Serializer):
+    username_to_decline = serializers.CharField()
+
+    def save(self, **kwargs):
+        payload = {}
+        # Getting the receiver of the friend request user object == active user
+        active_user = User.objects.get(id=self.context['user_id'])
+        # Getting the receiver of the friend request user object
+        try:
+            sender = User.objects.get(username=self.context['username_to_decline'][0])
+            try:
+                # Get any friend request active and not active between these 2
+                contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
+                contact_request.decline()
             except Exception as e:
                 print(e)
         except Exception as e:
