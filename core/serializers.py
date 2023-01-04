@@ -1,19 +1,18 @@
 import uuid
 
 from rest_framework import serializers
-from core.models import User, Event, Invitation
+from core.models import User, Event, Invitation, ContactList, ContactRequest
 
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
 
 
-# ====
-# User profile serializer
-# ====
+# ####################################################################################################@
+# User Serializers
+# ####################################################################################################@
 
 # 1. User creation serializer
-
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         fields = [
@@ -26,9 +25,7 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         ]
 
 
-# 2. User profile serializer
-
-# 2.1 Sub serializer for the 'event_invited_to' field in the User
+# Sub serializer for the 'event_invited_to' field in the User
 class EventInvitedToSerializer(serializers.ModelSerializer):
     event_id = serializers.ReadOnlyField(source='get_event_id')
     title = serializers.ReadOnlyField(source='get_event_title')
@@ -48,21 +45,11 @@ class EventCreatedSerializer(serializers.ModelSerializer):
         fields = ['event_id', 'title', 'start_date']
 
 
-# Sub serializer for the 'my_contacts' field in the User
-class ContactListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Invitation
-        fields = ['contact_id']
-
-
-# Display information of the connected member
-# /agenda/member/me/ (GET)
-
+# 2. User profile serializer
 class UserSerializer(BaseUserSerializer):
     # username = serializers.ReadOnlyField()
     event_created = EventCreatedSerializer(many=True)
     event_invited_to = EventInvitedToSerializer(many=True)
-    my_contacts = ContactListSerializer(many=True)
 
     class Meta(BaseUserSerializer.Meta):
         fields = [
@@ -73,11 +60,10 @@ class UserSerializer(BaseUserSerializer):
             'protected_symmetric_key',
             'event_created',
             'event_invited_to',
-            'my_contacts'
         ]
 
 
-# Display information of the other member
+# Only display username of the other users
 class OtherUserSerializer(BaseUserSerializer):
     username = serializers.ReadOnlyField()
 
@@ -87,27 +73,66 @@ class OtherUserSerializer(BaseUserSerializer):
         ]
 
 
-# /agenda/member/update_contacts/ (PUT)
-class UpdateContactSerializer(BaseUserSerializer):
-    username = serializers.ReadOnlyField(read_only=True)
-
-    class Meta(BaseUserSerializer.Meta):
-        model = User
-        fields = [
-            'username',
-            'protected_contact_list',
-        ]
-
-
+# For every other request, hide just in case
 class HideUserSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         fields = [
         ]
 
 
-# ====
-# Invitations serializers
-# ====
+# ####################################################################################################@
+# Contact Serializers
+# ####################################################################################################@
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactList
+        fields = [
+            'contacts'
+        ]
+
+
+class AddContactSerializer(serializers.Serializer):
+    username_to_add = serializers.CharField()
+
+    def save(self, **kwargs):
+        payload = {}
+        # Getting the sender of the friend request user object
+        active_member = User.objects.get(id=self.context['user_id'])
+        # Getting the receiver of the friend request user object
+        receiver = User.objects.get(username=self.context['username_to_add'][0])
+        try:
+            # Get any friend request active and not active between these 2
+            contact_request = ContactRequest.objects.filter(sender=active_member, receiver=receiver)
+            # Find if any contact request is active
+            try:
+                for request in contact_request:
+                    if request.is_active:
+                        raise Exception("You already sent a contact request.")
+                # If none are active, then create a new friend request
+                contact_request = ContactRequest(sender=active_member, receiver=receiver)
+                contact_request.save()
+                payload['response'] = "Friend request sent."
+            except Exception as e:
+                payload['response'] = f"{e}"
+        except ContactRequest.DoesNotExist:
+            # This user has never sent a friend request => Create one
+            contact_request = ContactRequest(sender=active_member, receiver=receiver)
+            contact_request.save()
+            payload['response'] = "Friend request sent."
+
+        if payload['response'] is None:
+            payload['response'] = "Something went wrong. (ADC)"
+class HideContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactList
+        fields = [
+        ]
+
+
+# ####################################################################################################@
+# Invitations Serializers
+# ####################################################################################################@
 
 class InvitationsSerializer(serializers.ModelSerializer):
     invitation_id = serializers.UUIDField(source='id', read_only=True)
@@ -139,7 +164,6 @@ class UpdateInvitationsSerializer(serializers.ModelSerializer):
     member_invited = serializers.UUIDField(source='member_invited.username', read_only=True)
     member_protected_event_key = serializers.CharField(source='invited_member_protected_event_key', read_only=True)
 
-
     class Meta:
         model = Invitation
         fields = [
@@ -157,21 +181,41 @@ class AddInvitationsSerializer(serializers.Serializer):
     username_to_invite = serializers.CharField()
 
     def save(self, **kwargs):
-        event = Event.objects.prefetch_related('creator').get(id=self.context['event_id'])
-        member_invited = User.objects.get(username=self.context['username_to_invite'][0])
+        # Getting the creator user object
         active_member = User.objects.get(id=self.context['user_id'])
-        # If the users to invite exists
-        #if User.objects.filter(username=self.context['username_to_invite'][0]).exists():
-            # If the active member is the creator of the event
-        if event.creator.id == active_member.id:
-            # TODO 2: Add another condition with the contact list
-            # Save the event
-            Invitation.objects.create(
-                event=event,
-                member_invited=member_invited,
-            )
-        #else:
-            #print('this user doesnt exist')
+        try:
+            # Getting the event object to invite to
+            event = Event.objects.prefetch_related('creator').get(id=self.context['event_id'])
+            # If the users to invite exists => if the username input is correct
+            try:
+                member_invited = User.objects.get(username=self.context['username_to_invite'][0])
+
+                # If the creator contact list exists
+                try:
+                    creator_contact_list = ContactList.objects.get(user_id=self.context['user_id'])
+                except ContactList.DoesNotExist:
+                    creator_contact_list = ContactList(user_id=self.context['user_id'])
+                    creator_contact_list.save()
+
+                # Accessing all the contacts of the creator
+                creator_contacts = creator_contact_list.contacts.all()
+
+                # If the active member is the creator of the event
+                if event.creator.id == active_member.id:
+                    # If the member invited is in the contact list (change with username if proble
+                    if member_invited.id in creator_contacts:
+                        Invitation.objects.create(
+                            event=event,
+                            member_invited=member_invited,
+                        )
+            except Exception as e:
+                print(e)
+                print('The username doesnt exist')
+        except Exception as e:
+            print(e)
+            print('This event doesnt exist')
+        # else:
+        # print('this user doesnt exist')
 
 
 class HideInvitationsSerializer(serializers.ModelSerializer):
@@ -181,9 +225,9 @@ class HideInvitationsSerializer(serializers.ModelSerializer):
         ]
 
 
-# ====
-# Events serializers
-# ====
+# ####################################################################################################@
+# Events Serializers
+# ####################################################################################################@
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -257,4 +301,3 @@ class HideEventsSerializers(serializers.ModelSerializer):
         model = Event
         fields = [
         ]
-

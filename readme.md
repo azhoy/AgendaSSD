@@ -37,9 +37,9 @@
   - Key : Authorization
   - Value: JWT <access_token>
 - **URL**: /users/me
-- **Method A**:GET 
-- **Request A**:
-- **Response A**
+- **Method**:GET 
+- **Request**:
+- **Response**
   - HTTP_200_OK
     - user id 
     - email
@@ -50,6 +50,17 @@
     - event created list
     - event invited to list
     - contact list
+
+### See all the usernames ( Useful ??? )
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
+- **URL**: /users/all_users
+- **Method **:GET 
+- **Request**:
+- **Response **
+  - HTTP_200_OK
+    - list of usernames
 
 ### Generate JSON Web Token
 - **URL**: /jwt/create/

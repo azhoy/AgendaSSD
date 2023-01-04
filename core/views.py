@@ -12,15 +12,19 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
-from .models import Event, User, Invitation
+from .models import Event, User, Invitation, ContactList
 from .serializers import (
-    UpdateContactSerializer, HideUserSerializer, OtherUserSerializer,
+    ContactSerializer, AddContactSerializer,HideContactSerializer,
+    HideUserSerializer, OtherUserSerializer,
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
+# ####################################################################################################@
+# User Viewsets
+# ####################################################################################################@
+
 
 class CustomUserViewSet(UserViewSet):
-
 
     def get_permissions(self):
         if self.action == "create":
@@ -32,6 +36,12 @@ class CustomUserViewSet(UserViewSet):
         elif self.action == "set_username":
             self.permission_classes = djoser_settings.PERMISSIONS.set_username  # ["djoser.permissions.CurrentUserOrAdmin"]
         return super().get_permissions()
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'user_id': self.request.user.id,
+        }
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -48,11 +58,6 @@ class CustomUserViewSet(UserViewSet):
             return djoser_settings.SERIALIZERS.set_username
         elif self.action == "me":
             return djoser_settings.SERIALIZERS.current_user
-        elif self.action == "all_users":
-            return djoser_settings.SERIALIZERS.current_user
-        elif self.action == "update_contact":
-            return UpdateContactSerializer
-
         return HideUserSerializer
 
     # Override the '/users/me/' to prevent the modification of 'protected_symmetric_key' field by a user
@@ -63,6 +68,7 @@ class CustomUserViewSet(UserViewSet):
         if request.method == "GET":
             return self.retrieve(request, *args, **kwargs)
 
+    # List the usernames of all users
     @action(["get"], detail=False)
     def all_users(self, request, *args, **kwargs):
         all_users = User.objects.all()
@@ -73,31 +79,82 @@ class CustomUserViewSet(UserViewSet):
                 username_list.append(serializer.data)
             return Response(username_list)
 
-    # Overriding all the unnecessary actions from djoser user
+
+    # Overriding all the unnecessary actions from the djoser package
     @action(["get"], detail=False)
     def activation(self, request, *args, **kwargs):
-        return Response({"Message": "No content"})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     @action(["get"], detail=False)
     def resend_activation(self, request, *args, **kwargs):
-        return Response({"Message": "No content"})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     @action(["get"], detail=False)
     def reset_username(self, request, *args, **kwargs):
-        return Response({"Message": "No content"})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     @action(["get"], detail=False)
     def reset_username_confirm(self, request, *args, **kwargs):
-        return Response({"Message": "No content"})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     @action(["get"], detail=False)
     def reset_password(self, request, *args, **kwargs):
-        return Response({"Message": "No content"})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     @action(["get"], detail=False)
     def reset_password_confirm(self, request, *args, **kwargs):
-        return Response({"Message": "No content"})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
+# ####################################################################################################@
+# Contacts Viewset
+# ####################################################################################################@
+
+class ContactViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
+    def get_queryset(self):
+        user = self.request.user
+        member_id = User.objects.only('id').get(id=user.id)
+        return ContactList.objects.filter(user_id=member_id)
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'user_id': self.request.user.id,
+            'username_to_add': self.request.POST.getlist('username_to_add'),
+        }
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return ContactSerializer
+        elif self.request.method == 'POST':
+            return AddContactSerializer
+        return HideContactSerializer
+
+    # Send a contact request
+    @action(["get"], detail=False)
+    def my_contacts(self, request, *args, **kwargs):
+        contact_list = []
+        try:
+            contact_list = ContactList.objects.get(user_id=request.user.id).contacts.all()
+        except Exception as e:
+            print(f'{e}')
+        if request.method == "GET":
+            my_contacts = []
+            for contact in contact_list:
+                serializer = ContactSerializer(contact)
+                my_contacts.append(serializer.data)
+            return Response(my_contacts)
+
+    @action(["post"], detail=False)
+    def contact_request(self, request, *args, **kwargs):
+        user = self.request.user
+        # if request.method == "POST":
+        #    pass
+
+# ####################################################################################################@
+# Invitation Viewset
+# ####################################################################################################@
 
 class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
@@ -113,14 +170,17 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
 
     def get_queryset(self):
         member = User.objects.get(id=self.request.user.id)
-        event = Event.objects.prefetch_related('creator').get(id=self.kwargs['event_pk'])
-        # A member can see the invitations of an event he created
-        if member.id == event.creator.id:
-            return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
-        # A member can see the invitations of an event he is invited to
-        for invitation in event.invited.all():
-            if member.id == invitation.member_invited.id:
+        try:
+            event = Event.objects.prefetch_related('creator').get(id=self.kwargs['event_pk'])
+            # A member can see the invitations of an event he created
+            if member.id == event.creator.id:
                 return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
+            # A member can see the invitations of an event he is invited to
+            for invitation in event.invited.all():
+                if member.id == invitation.member_invited.id:
+                    return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
+        except Event.DoesNotExist:
+            pass
 
     def update(self, request, *args, **kwargs):
         member = User.objects.get(id=request.user.id)
@@ -147,6 +207,10 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
             'username_to_invite': self.request.POST.getlist('username_to_invite'),
         }
 
+# ####################################################################################################@
+# Event Viewsets
+# ####################################################################################################@
+
 
 class EventViewSet(
     ListModelMixin,
@@ -158,8 +222,6 @@ class EventViewSet(
 ):
     queryset = Event.objects.prefetch_related('creator').all()
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
-
-
 
     def get_queryset(self):
         user = self.request.user
@@ -201,7 +263,7 @@ class EventViewSet(
             # print(f"event serializer.data: {serializer.data}")
             event_list.append(serializer.data)
         # return Response(event_list)
-        return Response({'events': event_list}, template_name='my_invitations.html')
+        return Response({'events': event_list})
 
     def update(self, request, *args, **kwargs):
         member = User.objects.get(id=request.user.id)

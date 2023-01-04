@@ -15,12 +15,16 @@ event_router.register('events', viewset=views.EventViewSet, basename='events')
 invitation_router = routers.NestedDefaultRouter(event_router, 'events', lookup='event')
 invitation_router.register('invitations', viewset=views.InvitationViewSet, basename='event-invitations')
 
-# /users/
-# /users/me
-# /users/set_username/
-# /users/set_password/
+# /agenda/users/
+# /agenda/users/me
+# /agenda/users/set_email/
+# /agenda/users/set_password/
 user_router = routers.DefaultRouter()
 user_router.register('users', viewset=views.CustomUserViewSet, basename='users')
+
+# /agenda/contacts
+contact_router = routers.DefaultRouter()
+contact_router.register('contacts', viewset=views.ContactViewSet, basename='contacts')
 
 
 app_name = 'core'
@@ -29,6 +33,7 @@ urlpatterns = [
     path('agenda/', include(event_router.urls)),
     path('agenda/', include(invitation_router.urls)),
     path('agenda/', include(user_router.urls)),
+    path('agenda/', include(contact_router.urls)),
     re_path(r"^jwt/create/?", jwtviews.TokenObtainPairView.as_view(), name="jwt-create"),
     re_path(r"^jwt/refresh/?", jwtviews.TokenRefreshView.as_view(), name="jwt-refresh"),
     re_path(r"^jwt/verify/?", jwtviews.TokenVerifyView.as_view(), name="jwt-verify"),
