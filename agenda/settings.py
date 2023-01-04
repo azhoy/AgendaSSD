@@ -51,7 +51,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 ROOT_URLCONF = 'agenda.urls'
 
 TEMPLATES = [
@@ -135,19 +134,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     # Auto type conversion from str to decimal
     'COERCE_DECIMAL_TO_STRING': False,
-    # Activate JSON Web token as default => TODO: Replace with Ayoub implementation
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        # Closes all the API endpoints to anonymous users excepts registration and login
-        #  'rest_framework.permissions.IsAuthenticated'
-    ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ]
 }
-
 
 # JSON WEB TOKEN parameters =>  TODO: Replace with Ayoub implementation
 SIMPLE_JWT = {
@@ -175,3 +168,12 @@ DJOSER = {
         'current_user': 'core.serializers.UserSerializer',
     }
 }
+
+# Argon2 used by default for storing password
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.ScryptPasswordHasher',
+]
