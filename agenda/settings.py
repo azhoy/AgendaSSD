@@ -20,12 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x443m1!zfpcc(!rk@&fis+h9yjv=mj9*pq--0vxd&)jpkl@y9*'
+SECRET_KEY = 'django-insecure-x443m1!zfpcc(!rk@&fis+h9yjv=mj9*pq--0vxd&)jpkl@y9*'  # TODO: Set from Evn Variables in prod (=> installation script)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True # TODO: Remove debug in production
+DEBUG = True  # TODO: Remove debug in production
 
-ALLOWED_HOSTS = []
+# A list of strings representing the host/domain names that this Django site can serve.
+ALLOWED_HOSTS = []  #
 
 # Application definition
 
@@ -36,15 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_filters',  # 3rd
     'rest_framework',  # 3rd
     'djoser',  # 3rd
     'core',
-    # 'debug_toolbar'
 ]
 
 MIDDLEWARE = [
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,9 +52,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-INTERNAL_IPS = [
-    "127.0.0.1"
-]
 
 ROOT_URLCONF = 'agenda.urls'
 TEMPLATE_CORE_DIR = BASE_DIR / 'core' / 'templates' / 'core'
@@ -168,7 +163,11 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
     # Lifetime of the JSON Web Token
     'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=6)  # TODO: CHANGE IN PROD !!!
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
+
+    'ROTATE_REFRESH_TOKENS': True,
+    # Make sure the old refresh token can no longer be used
+    'BLACKLIST_AFTER_ROTATION': True
 }
 # Replacing the default auth model with the modified abstract model from models.py
 # https://docs.djangoproject.com/en/4.1/topics/auth/customizing/#substituting-a-custom-user-model

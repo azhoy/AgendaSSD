@@ -254,7 +254,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
                 serializer.is_valid(raise_exception=True)
                 self.perform_update(serializer)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response({'message': 'Forbidden. NOT your invitation'})
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get_serializer_context(self):
         return {
@@ -337,7 +337,7 @@ class EventViewSet(
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'message': 'Forbidden. NOT your event'})
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     # Overriding the delete method
     def destroy(self, request, *args, **kwargs):
@@ -347,4 +347,4 @@ class EventViewSet(
         if member.id == event.creator.id:
             event.delete()
             return Response({'message': 'Event deleted'}, status=status.HTTP_204_NO_CONTENT)
-        return Response({'message': 'Forbidden. NOT your event'})
+        return Response(status=status.HTTP_404_NOT_FOUND)
