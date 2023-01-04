@@ -217,7 +217,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     def get_serializer_class(self):
-        if self.request.method == 'PUT':
+        if self.request.method == 'PUT' or self.request.method == 'PATCH':
             return UpdateInvitationsSerializer
         elif self.request.method == 'GET':
             return InvitationsSerializer
@@ -237,10 +237,10 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
                 if member.id == invitation.member_invited.id:
                     return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
         except Event.DoesNotExist:
-            pass
+            print('Event doesnt exist')
 
     def update(self, request, *args, **kwargs):
-        member = User.objects.get(id=request.user.id)
+        active_user = User.objects.get(id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['event_pk'])
         if getattr(event, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
@@ -248,8 +248,8 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
             event._prefetched_objects_cache = {}
 
         for invitation in event.invited.all():
-            # Only the invited member can modify the status of its invitation
-            if member.id == invitation.member_invited.id:
+            # Only the invited member can modify the status of its own invitation
+            if active_user.id == invitation.member_invited.id:
                 serializer = self.get_serializer(invitation, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 self.perform_update(serializer)

@@ -141,6 +141,7 @@ class ContactRequestSerializer(serializers.ModelSerializer):
             'is_active'
         ]
 
+
 class AcceptContactSerializer(serializers.Serializer):
     username_to_accept = serializers.CharField()
 
@@ -159,6 +160,7 @@ class AcceptContactSerializer(serializers.Serializer):
                 print(e)
         except Exception as e:
             print(e)
+
 
 class DeclineContactSerializer(serializers.Serializer):
     username_to_decline = serializers.CharField()
@@ -233,6 +235,21 @@ class InvitationsSerializer(serializers.ModelSerializer):
         ]
 
 
+class EventInvitationSerializer(serializers.ModelSerializer):
+    invitation_id = serializers.UUIDField(source='id', read_only=True)
+    event_id = serializers.CharField(source='event.id', read_only=True)
+    member_invited = serializers.CharField(source='member_invited.username', read_only=True)
+    # member_protected_event_key = serializers.CharField(source='invited_member_protected_event_key', read_only=True)
+
+    class Meta:
+        model = Invitation
+        fields = [
+            'invitation_id',
+            'event_id',
+            'member_invited',
+        ]
+
+
 class UpdateInvitationsSerializer(serializers.ModelSerializer):
     invitation_id = serializers.UUIDField(source='id', read_only=True)
     event_id = serializers.UUIDField(source='event.id', read_only=True)
@@ -273,7 +290,6 @@ class AddInvitationsSerializer(serializers.Serializer):
                 except ContactList.DoesNotExist:
                     creator_contact_list = ContactList(user_id=self.context['user_id'])
                     creator_contact_list.save()
-
 
                 """
                 # Accessing all the contacts of the creator
@@ -322,7 +338,7 @@ class EventSerializer(serializers.ModelSerializer):
     event_id = serializers.UUIDField(source='id', read_only=True)
     protected_event_key = serializers.CharField(read_only=True)
     creator_username = serializers.CharField(source='creator.username', read_only=True)
-    invited = InvitationsSerializer(many=True, read_only=True)
+    invited = EventInvitationSerializer(many=True, read_only=True)
 
     class Meta:
         model = Event

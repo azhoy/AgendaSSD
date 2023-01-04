@@ -161,7 +161,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/
+- **URL**: /agenda/decline_request/
 - **Method**: POST
 - **Request**:
   - username_to_decline
@@ -255,11 +255,12 @@
     -  "member_invited":
     
 #### Respond to an invitation (Need to be the member invited of the invitation)
+TODO: Being able to PUT data without the random string at the end of the URL the RandomString 
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/<event_id>/invitations/<invitation_id>
-- **Method**: PUT
+- **URL**: /agenda/events/<event_id>/invitations/RandomString
+- **Method**: PUT or PATCH
 - **Request**:
   - acceptedStatus (text instead of bool)
 - **Response**
