@@ -11,6 +11,7 @@
   - email
   - username
   - password
+  - re_password
   - public_key
   - protected_private_key
   - protected_symmetric_key
@@ -40,11 +41,13 @@
 - **Method**: POST
 - **Request**:
   - new_email
+  - re_new_email
   - current_password
 - Response
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
     - new_email
+    - re_new_email
     - current_password
     
 #### Change password 
@@ -116,7 +119,6 @@
 - **URL**: /agenda/contacts/
 - **Method**: GET
 - **Request**:
-
 - **Response**
   - HTTP_200_OK
     - List of contacts 
@@ -131,7 +133,7 @@
   - username_to_add
 - **Response**
   - HTTP_201_CREATED
-    - "username_to_add": ""
+    - username_to_add
 
 #### See my contact request
 - **Header** : 
@@ -140,7 +142,6 @@
 - **URL**: /agenda/requests/
 - **Method**: GET
 - **Request**:
-
 - **Response**
   - HTTP_200_OK
     - List of contacts requests
@@ -183,7 +184,6 @@
 
 
 ### C) Creating, editing and deleting an event from the server
-
 #### Add an event
 - **Header** : 
   - Key : Authorization
@@ -204,7 +204,7 @@
     - start_date
     - end_date
     - description
-    - locationy
+    - location
   - HTTP_400_BAD_REQUEST
       - non_fields_errors
 
@@ -227,10 +227,10 @@
     - start_date
     - end_date
     - description
-    - locationy
+    - location
   - HTTP_400_BAD_REQUEST
       - non_fields_errors
-      - 
+    
 #### Delete an event (Need to be the creator of the event)
 - **Header** : 
   - Key : Authorization
@@ -238,7 +238,6 @@
 - **URL**: /agenda/events/<event_id>
 - **Method**: DELETE
 - **Request**:
-
 - **Response**
   - HTTP 204 No Content
     - "message": "Event deleted"
@@ -251,7 +250,7 @@
 - **URL**: /agenda/events/<event_id>/invitations/
 - **Method**: POST
 - **Response**
-  - HTTP 201 Created
+  - HTTP_201_Created
     -  "member_invited":
     
 #### Respond to an invitation (Need to be the member invited of the invitation)
@@ -264,18 +263,17 @@ TODO: Being able to PUT data without the random string at the end of the URL the
 - **Request**:
   - acceptedStatus (text instead of bool)
 - **Response**
-  - HTTP 201 Created
-    -  "member_invited":
+  - HTTP_200_OK
+    -  "acceptedStatus":
 
 ### E) Checking an agenda
 #### List of events I created
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/
+- **URL**: /agenda/events/my_events/
 - **Method**: GET
 - **Request**:
-
 - **Response**
   - HTTP_200_OK
     - List of events
@@ -287,7 +285,6 @@ TODO: Being able to PUT data without the random string at the end of the URL the
 - **URL**: /agenda/events/my_invitations/
 - **Method**: GET
 - **Request**:
-
 - **Response**
   - HTTP_200_OK
     - List of events

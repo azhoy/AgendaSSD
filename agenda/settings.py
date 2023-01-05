@@ -179,6 +179,11 @@ AUTH_USER_MODEL = 'core.User'
 
 # Djoser serializers options
 DJOSER = {
+    'USER_ID_FIELD': 'username',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'SET_USERNAME_RETYPE': True,
+    'SET_PASSWORD_RETYPE': True,
+    'TOKEN_MODEL': None,
     'SERIALIZERS': {
         # Custom User Serializers with 'id', 'username', 'password' and 'protected_symmetric_key' fields
         'user_create': 'core.serializers.UserCreateSerializer',

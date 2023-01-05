@@ -61,6 +61,14 @@ class CustomUserViewSet(UserViewSet):
             return djoser_settings.SERIALIZERS.current_user
         return HideUserSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(status=status.HTTP_201_CREATED, headers=headers)
+
+
     # Override the '/users/me/' to prevent the modification of 'protected_symmetric_key' field by a user
     # The authenticated user can only retrieve its information
     @action(["get"], detail=False)
@@ -68,19 +76,6 @@ class CustomUserViewSet(UserViewSet):
         self.get_object = self.get_instance
         if request.method == "GET":
             return self.retrieve(request, *args, **kwargs)
-
-    """
-    # List the usernames of all users
-    @action(["get"], detail=False)
-    def all_users(self, request, *args, **kwargs):
-        all_users = User.objects.all()
-        if request.method == "GET":
-            username_list = []
-            for username in all_users:
-                serializer = OtherUserSerializer(username)
-                username_list.append(serializer.data)
-            return Response(username_list)
-    """
 
     # Overriding all the unnecessary actions from the djoser package
     @action(["get"], detail=False)

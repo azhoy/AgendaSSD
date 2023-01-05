@@ -74,8 +74,8 @@ class OtherUserSerializer(BaseUserSerializer):
 
 
 # For every other request, hide just in case
-class HideUserSerializer(BaseUserCreateSerializer):
-    class Meta(BaseUserCreateSerializer.Meta):
+class HideUserSerializer(serializers.ModelSerializer):
+    class Meta:
         fields = [
         ]
 
