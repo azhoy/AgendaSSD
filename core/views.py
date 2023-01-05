@@ -13,9 +13,9 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from .models import Event, User, Invitation, ContactList, ContactRequest
 from .serializers import (
     ContactSerializer, AddContactRequestSerializer, ContactRequestSerializer, HideContactSerializer,
-    AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer, OtherUserSerializer,
+    AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer,
     EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
-    InvitationsSerializer, UpdateInvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
+    InvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
 
 # ####################################################################################################@
@@ -39,7 +39,7 @@ class CustomUserViewSet(UserViewSet):
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
         }
 
     def get_serializer_class(self):
@@ -57,6 +57,7 @@ class CustomUserViewSet(UserViewSet):
             return djoser_settings.SERIALIZERS.set_username
         elif self.action == "me":
             return djoser_settings.SERIALIZERS.current_user
+        # Default serializer doesn't disclose any information on any users
         return HideUserSerializer
 
     # Overriding default create method to remove extra information
@@ -66,7 +67,6 @@ class CustomUserViewSet(UserViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(status=status.HTTP_201_CREATED, headers=headers)
-
 
     # Override the '/users/me/' to prevent the modification of 'protected_symmetric_key' field by a user
     # The authenticated user can only retrieve its information
@@ -111,14 +111,29 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
 
     # Get => See my contact list
     def get_queryset(self):
-        user = self.request.user
-        member_id = User.objects.only('id').get(id=user.id)
-        return ContactList.objects.filter(user_id=member_id)
+        active_username = self.request.user.username,
+        try:
+            contact_list = ContactList.objects.filter(user__username=active_username[0])
+            return contact_list
+        except Exception as e:
+            print(e)
+
+    """ 
+    @action(detail=False, methods=['GET'])
+    def my_events(self, request):
+        member = User.objects.get(id=request.user.id)
+        events = Event.objects.prefetch_related('creator').filter(creator_id=member.id)
+        event_dict = {}
+        for event in events:
+            serializer = EventSerializer(event)
+            event_dict[f'{event.id}'] = serializer.data
+        return Response(event_dict)
+    """
 
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
             'username_to_add': self.request.POST.getlist('username_to_add'),
         }
 
@@ -136,6 +151,7 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(status=status.HTTP_201_CREATED, headers=headers)
+
 
 class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
@@ -158,7 +174,7 @@ class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, G
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
             'username_to_accept': self.request.POST.getlist('username_to_accept')
         }
 
@@ -170,20 +186,19 @@ class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, G
         return HideContactSerializer
 
 
-class ContactDeclineViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class ContactDeclineViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Get => See my contact list
     def get_queryset(self):
         user = self.request.user
         contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
-        print(contact_requests)
         return contact_requests
 
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
             'username_to_decline': self.request.POST.getlist('username_to_decline')
         }
 
@@ -202,6 +217,7 @@ class ContactDeclineViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, 
         headers = self.get_success_headers(serializer.data)
         return Response(status=status.HTTP_201_CREATED, headers=headers)
 
+
 class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
@@ -217,13 +233,12 @@ class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
     def get_queryset(self):
         user = self.request.user
         contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
-        print(contact_requests)
         return contact_requests
 
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
             'username_to_delete': self.request.POST.getlist('username_to_delete')
         }
 
@@ -237,31 +252,13 @@ class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
 # Invitation Viewset
 # ####################################################################################################@
 
-class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class InvitationViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     def get_serializer_class(self):
-        if self.request.method == 'PUT' or self.request.method == 'PATCH':
-            return UpdateInvitationsSerializer
-        elif self.request.method == 'GET':
-            return InvitationsSerializer
-        elif self.request.method == 'POST':
+        if self.request.method == 'POST':
             return AddInvitationsSerializer
         return HideInvitationsSerializer
-
-    def get_queryset(self):
-        member = User.objects.get(id=self.request.user.id)
-        try:
-            event = Event.objects.prefetch_related('creator').get(id=self.kwargs['event_pk'])
-            # A member can see the invitations of an event he created
-            if member.id == event.creator.id:
-                return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
-            # A member can see the invitations of an event he is invited to
-            for invitation in event.invited.all():
-                if member.id == invitation.member_invited.id:
-                    return Invitation.objects.filter(event_id=self.kwargs['event_pk'])
-        except Event.DoesNotExist:
-            print('Event doesnt exist')
 
     # Overriding default create method to remove extra information
     def create(self, request, *args, **kwargs):
@@ -271,29 +268,15 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
         headers = self.get_success_headers(serializer.data)
         return Response(status=status.HTTP_201_CREATED, headers=headers)
 
-    def update(self, request, *args, **kwargs):
-        active_user = User.objects.get(id=request.user.id)
-        event = Event.objects.prefetch_related('creator').get(id=kwargs['event_pk'])
-        if getattr(event, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            event._prefetched_objects_cache = {}
-
-        for invitation in event.invited.all():
-            # Only the invited member can modify the status of its own invitation
-            if active_user.id == invitation.member_invited.id:
-                serializer = self.get_serializer(invitation, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-                return Response(status=status.HTTP_200_OK)
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
     def get_serializer_context(self):
         return {
             'request': self.request,
             'event_id': self.kwargs['event_pk'],
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
             'username_to_invite': self.request.POST.getlist('username_to_invite'),
+            'protected_event_id': self.request.POST.getlist('protected_event_id'),
+            'protected_event_key': self.request.POST.getlist('protected_event_key'),
+            'protected_participants_list': self.request.POST.getlist('protected_participants_list'),
         }
 
 
@@ -324,7 +307,7 @@ class EventViewSet(
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'user_id': self.request.user.id,
+            'username': self.request.user.username,
             'protected_event_key': self.request.POST.getlist('protected_event_key'),
             'title': self.request.POST.getlist('title'),
             'start_date': self.request.POST.getlist('start_date'),
@@ -334,10 +317,12 @@ class EventViewSet(
         }
 
     def get_serializer_class(self):
-        if self.request.method == 'PUT':
+        if self.request.method == 'PUT' or self.request.method == 'PATCH':
             return UpdateEventSerializer
         elif self.request.method == 'POST':
             return AddEventSerializer
+        elif self.request.method == 'GET' and self.action == 'my_invitations':
+            return InvitationsSerializer
         else:
             # Serializer to hide events details in the endpoint for non-related user
             return EventSerializer
@@ -352,18 +337,18 @@ class EventViewSet(
 
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):
-        member = User.objects.get(id=request.user.id)
-        events = Event.objects.prefetch_related('creator').filter(invited__member_invited=member.id)
-        event_dict = {}
-        for event in events:
-            serializer = EventSerializer(event)
-            event_dict[f'{event.id}'] = serializer.data
-        return Response(event_dict)
+        active_user = User.objects.get(id=request.user.id)
+        invitations = Invitation.objects.filter(user_invited__id=active_user.id)
+        invitation_dict = {}
+        for invitation in invitations:
+            serializer = InvitationsSerializer(invitation)
+            invitation_dict[f'{invitation.id}'] = serializer.data
+        return Response(invitation_dict)
 
     @action(detail=False, methods=['GET'])
     def my_events(self, request):
-        member = User.objects.get(id=request.user.id)
-        events = Event.objects.prefetch_related('creator').filter(creator_id=member.id)
+        active_user = User.objects.get(id=request.user.id)
+        events = Event.objects.prefetch_related('creator').filter(creator_id=active_user.id)
         event_dict = {}
         for event in events:
             serializer = EventSerializer(event)

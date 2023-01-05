@@ -149,7 +149,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-# JSON WEB TOKEN parameters =>  TODO: Replace with Ayoub implementation
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
     'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
@@ -170,8 +169,8 @@ SIMPLE_JWT = {
     # FORMAT => Authorization: JWT <token>
     'AUTH_HEADER_TYPES': ('JWT',),
     # DB field included in the token, username is unique and cannot be changed
-    'USER_ID_FIELD': 'username'
-    # Make sure the old refresh token can no longer be used
+    'USER_ID_FIELD': 'username',
+    'USER_ID_CLAIM': 'username'
 }
 # Replacing the default auth model with the modified abstract model from models.py
 # https://docs.djangoproject.com/en/4.1/topics/auth/customizing/#substituting-a-custom-user-model
@@ -185,7 +184,6 @@ DJOSER = {
     'SET_PASSWORD_RETYPE': True,
     'TOKEN_MODEL': None,
     'SERIALIZERS': {
-        # Custom User Serializers with 'id', 'username', 'password' and 'protected_symmetric_key' fields
         'user_create': 'core.serializers.UserCreateSerializer',
         'user': 'core.serializers.UserSerializer',
         'current_user': 'core.serializers.UserSerializer',
@@ -195,8 +193,8 @@ DJOSER = {
 # Argon2 used by default for storing password
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.ScryptPasswordHasher',
+    # 'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    # 'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    # 'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    # 'django.contrib.auth.hashers.ScryptPasswordHasher',
 ]

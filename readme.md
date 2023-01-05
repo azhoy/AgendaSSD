@@ -5,7 +5,7 @@
 
 ### A) User registration, authentication and revocation
 #### Register 
-- **URL**: /agenda/users/
+- **URL**: /users/
 - **Method**: POST
 - **Request**:
   - email
@@ -17,20 +17,7 @@
   - protected_symmetric_key
 - **Response**
   - HTTP_201_CREATED
-    - email
-    - id
-    - username
-    - public_key
-    - protected_private_key
-    - protected_symmetric_key
   - HTTP_400_BAD_REQUEST
-      - email
-      - id
-      - username
-      - public_key
-      - protected_private_key
-      - protected_symmetric_key
-      - password
   
 #### Change email
 (TODO: Send confirmation link to email + SET_USERNAME_RETYPE = True)
@@ -46,9 +33,6 @@
 - Response
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
-    - new_email
-    - re_new_email
-    - current_password
     
 #### Change password 
 (TODO: Send confirmation link to email + SET_PASSWORD_RETYPE = True)
@@ -64,9 +48,6 @@
 - Response
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
-    - new_password
-    - re_new_password
-    - current_password
   
 #### Generate JSON Web Token
 - **URL**: /jwt/create/
@@ -88,7 +69,8 @@
   - refresh token
 - Response
   - HTTP_200_OK
-    - new access token 
+    - access token 
+    - refresh token
   - HTTP_400_BAD_REQUEST
       - non_field_errors
   
@@ -101,22 +83,17 @@
 - **Request**:
 - **Response**
   - HTTP_200_OK
-    - user id 
-    - email
     - username
     - public_key
     - protected_private_key
     - protected_symmetric_key
-    - event created list
-    - event invited to list
-    - contact list
 
 ### B) Adding / deleting a contact
 #### See my contacts
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/contacts/
+- **URL**: /contacts/all/
 - **Method**: GET
 - **Request**:
 - **Response**
@@ -127,7 +104,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/contacts/
+- **URL**: /contacts/all/
 - **Method**: POST
 - **Request**:
   - username_to_add
@@ -139,7 +116,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/requests/
+- **URL**: /contacts/requests/
 - **Method**: GET
 - **Request**:
 - **Response**
@@ -150,7 +127,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/requests/
+- **URL**: /contacts/requests/
 - **Method**: POST
 - **Request**:
   - username_to_accept
@@ -162,7 +139,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/decline_request/
+- **URL**: /contacts/decline_request/
 - **Method**: POST
 - **Request**:
   - username_to_decline
@@ -174,7 +151,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/delete_contact/
+- **URL**: /contacts/delete_contact/
 - **Method**: POST
 - **Request**:
   - username_to_delete
@@ -184,11 +161,12 @@
 
 
 ### C) Creating, editing and deleting an event from the server
+
 #### Add an event
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/
+- **URL**: /events/
 - **Method**: POST
 - **Request**:
   - protected_event_key
@@ -199,21 +177,14 @@
   - location
 - **Response**
   - HTTP_201_CREATED
-    - protected_event_key
-    - title
-    - start_date
-    - end_date
-    - description
-    - location
   - HTTP_400_BAD_REQUEST
-      - non_fields_errors
 
 #### Update an event (Need to be the creator of the event)
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/<event_id>
-- **Method**: PUT
+- **URL**: /events/<event_id>
+- **Method**: PUT or PATCH
 - **Request**:
   - title
   - start_date
@@ -235,7 +206,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/<event_id>
+- **URL**: /events/<event_id>
 - **Method**: DELETE
 - **Request**:
 - **Response**
@@ -243,51 +214,49 @@
     - "message": "Event deleted"
 
 ### D) Invitation to an event
-#### Invite a member to my event (Need to be the creator of the event)
+
+#### Invite a contact to my event (Need to be the creator of the event)
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/<event_id>/invitations/
+- **URL**: /events/<event_id>/invitations/
 - **Method**: POST
+- **Request**:
+  - username_to_invite
+  - protected_event_key: Key of the event protected with the invited member public key,
+  enables to read event detail on the event table and the event id on the invitation table.
+  - protected_event_id: ID of the event protected with the event key
+  - protected_participants_list: The new list of participants that will replace the one on the event table
 - **Response**
   - HTTP_201_Created
-    -  "member_invited":
     
-#### Respond to an invitation (Need to be the member invited of the invitation)
-TODO: Being able to PUT data without the random string at the end of the URL the RandomString 
-- **Header** : 
-  - Key : Authorization
-  - Value: JWT <access_token>
-- **URL**: /agenda/events/<event_id>/invitations/RandomString
-- **Method**: PUT or PATCH
-- **Request**:
-  - acceptedStatus (text instead of bool)
-- **Response**
-  - HTTP_200_OK
-    -  "acceptedStatus":
-
 ### E) Checking an agenda
 #### List of events I created
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/my_events/
+- **URL**: /events/my_events/
 - **Method**: GET
 - **Request**:
 - **Response**
   - HTTP_200_OK
     - List of events
-    
-#### List of events I was invited to 
+
+#### List of invitations
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /agenda/events/my_invitations/
+- **URL**: /events/my_invitations/
 - **Method**: GET
 - **Request**:
 - **Response**
   - HTTP_200_OK
-    - List of events
+    - List of invitations
+
+    
+#### List of events I was invited to (On the clien side)
+=> Use the list of invitations to decipher the protected_event_id with the user public key and see to which event the user was invited to
+=> Do it for each invitation
 
 
 

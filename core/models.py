@@ -35,9 +35,6 @@ class User(AbstractUser):
     # An event_created field is generated from the Foreign Key 'creator' of the Event model
     # => event_created by default is a list of event id
 
-    # An event_invited_to field is generated from the Foreign Key 'member_invited' of the Invitation model
-    # => event_invited_to by default is a list of invitation id
-
     # The field used in the authentication system inherited from the AbstractUser model
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
@@ -46,6 +43,9 @@ class User(AbstractUser):
         "public_key",
         "protected_private_key",
         "protected_symmetric_key"]
+
+    def __str__(self):
+        return self.username
 
 
 # ####################################################################################################@
@@ -70,8 +70,6 @@ class ContactList(models.Model):
         blank=True,
         related_name='friends'
     )
-
-
 
     def add_contact(self, username_to_add):
         """
@@ -160,6 +158,7 @@ class ContactRequest(models.Model):
         self.is_active = False
         self.save()
 
+    # Not implemented
     def cancel(self):
         """
         Cancel == Decline from the perspective of the sender of the contact request
@@ -188,58 +187,47 @@ class Event(models.Model):
     # When the invited user wants to read the details of an event he was invited to, he first decrypts its
     # protected_symmetric_key on the client with its stretched master key and get a symmetric key,
     # Then, he uses this symmetric key to decrypt its protected_private_key. Once he has his the private key,
-    # He can decrypt the field 'invited_member_protected_event_key' on its invitation. He is now able to read the event.
+    # He can decrypt the field 'protected_event_key' on its invitation. He is now able to read the event.
     protected_event_key = models.TextField()
 
-    # User object of the owner of the contact list
+    # User object of the owner of the contact list, the only field in clear in the event table
     creator = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='event_created'
     )
     # Event details fields encrypted the event key
+    # The creator can directly decipher the protected_event_key to read them
+    # Invited users need to use the protected_event_key from their invitation
     title = models.TextField()
     start_date = models.TextField()
-    end_date = models.TextField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    location = models.TextField(null=True, blank=True)
+    end_date = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    location = models.TextField(blank=True)
+    participants = models.TextField(blank=True)
 
-    # An invited field is generated from the Foreign Key 'event' of the Invitation model
+    # Methods used when an invitation is created
+    # The list of participants is updated
+    def update_participants(self, new_participants):
+        self.participants = new_participants
+        self.save()
 
 
-#####################################################################################################@
+# ####################################################################################################@
 # Event Invitation model
-#####################################################################################################@
+# ####################################################################################################@
 
 class Invitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
 
-    # TODO Maybe: Remove this fields and replace with a text field ciphered with the 'invited_member_protected_event_key'
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='invited')
+    user_invited = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_invited_to')
 
-    member_invited = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_invited_to')
+    protected_event_key = models.TextField()
 
-    invited_member_protected_event_key = models.TextField()
+    # Decipher this field with 'the unprotected invited_member_event_key'
+    protected_event_id = models.TextField()
 
-    # "" (Not answered yet), "Accepted" or "Refused"
-    acceptedStatus = models.TextField()
+    # acceptedStatus = models.BooleanField(default=False)
 
     class Meta:
-        # Unique constraint : Only one invited_member - event pair allowed
-        unique_together = [['event', 'member_invited']]
-
-    @property
-    def get_event_id(self):
-        return self.event.id
-
-    @property
-    def get_event_creator(self):
-        return self.event.creator.id
-
-    @property
-    def get_event_title(self):
-        return self.event.title
-
-    @property
-    def get_event_start_date(self):
-        return self.event.start_date
+        unique_together = [['protected_event_id', 'user_invited']]
