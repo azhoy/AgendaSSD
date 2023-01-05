@@ -61,6 +61,7 @@ class CustomUserViewSet(UserViewSet):
             return djoser_settings.SERIALIZERS.current_user
         return HideUserSerializer
 
+    # Overriding default create method to remove extra information
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -130,6 +131,13 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
             return AddContactRequestSerializer
         return HideContactSerializer
 
+    # Overriding default create method to remove extra information
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(status=status.HTTP_201_CREATED, headers=headers)
 
 class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
@@ -180,6 +188,13 @@ class ContactDeclineViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, 
             return DeclineContactSerializer
         return HideContactSerializer
 
+    # Overriding default create method to remove extra information
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(status=status.HTTP_201_CREATED, headers=headers)
 
 class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
@@ -234,6 +249,14 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
         except Event.DoesNotExist:
             print('Event doesnt exist')
 
+    # Overriding default create method to remove extra information
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(status=status.HTTP_201_CREATED, headers=headers)
+
     def update(self, request, *args, **kwargs):
         active_user = User.objects.get(id=request.user.id)
         event = Event.objects.prefetch_related('creator').get(id=kwargs['event_pk'])
@@ -248,7 +271,7 @@ class InvitationViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, Gene
                 serializer = self.get_serializer(invitation, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 self.perform_update(serializer)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(status=status.HTTP_200_OK)
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get_serializer_context(self):
@@ -305,6 +328,14 @@ class EventViewSet(
             # Serializer to hide events details in the endpoint for non-related user
             return EventSerializer
 
+    # Overriding default create method to remove extra information
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(status=status.HTTP_201_CREATED, headers=headers)
+
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):
         member = User.objects.get(id=request.user.id)
@@ -338,7 +369,7 @@ class EventViewSet(
             serializer = self.get_serializer(event, data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     # Overriding the delete method
@@ -348,5 +379,5 @@ class EventViewSet(
         # Only the creator of an event can delete this event
         if member.id == event.creator.id:
             event.delete()
-            return Response({'message': 'Event deleted'}, status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_404_NOT_FOUND)
