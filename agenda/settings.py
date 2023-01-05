@@ -20,7 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x443m1!zfpcc(!rk@&fis+h9yjv=mj9*pq--0vxd&)jpkl@y9*'  # TODO: Set from Evn Variables in prod (=> installation script)
+# At least 512bits => Bc of HMAC SHA-512
+# TODO: Set from Env Variables in prod (=> installation script)
+SECRET_KEY = ')+e@9!)1e98&-=074+6&3b5d)7+))b(10f111-0-2bc13ded0@fb3b=1)d5**7=013=!*7f0*)cb00)ec@@d&8e*&!!b!)7cbb2e=a' \
+             '38@b)fcfb&eac@71e9ca@2e@0)+++&+1c08**(=!f&0368@+b656+fc!563(b*e05*(a+7=df6&c(9+9af!476!!&3b9b9)-=(a-+8' \
+             '8e(+-@!34&51d*-=0)=-ccb4@a6+41806ec!@83)a2fdf@=@4(08+3ea6*(8*d8+95fd&13!d52e528(9*2f!*)*64!e*a-75c9605' \
+             '=))eebef1+dd3d21da@b@bd@3fa&+80+9(67c@bd0-1d=cc479@-4e&(+)35d-fc1=-f-2*(@96cb0+93b0+43+4-32f@9)9-)@=&+' \
+             '35c50=((b!*(69c&2cb8c&d65c33f)ba!eba323a)9da@0a4)e2de!1&05a0510-d@1@7-*a+70&0a-9*&4d=9@30-6(@b5-e404f-@('
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  # TODO: Remove debug in production
@@ -36,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
     'rest_framework',
     'djoser',
     'core',
@@ -144,16 +151,27 @@ REST_FRAMEWORK = {
 
 # JSON WEB TOKEN parameters =>  TODO: Replace with Ayoub implementation
 SIMPLE_JWT = {
-    # To send an authentication token to the server => Prefix the Token with JWT
-    # JWT <token>
-    'AUTH_HEADER_TYPES': ('JWT',),
-    # Lifetime of the JSON Web Token
     'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
     'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
-
+    # A new refresh token is submitted when using the refresh token endpoint
     'ROTATE_REFRESH_TOKENS': True,
+    # Causes refresh tokens submitted to the refresh endpoints to be added to the blacklist
+    # Prevent them from being reused
+    'BLACKLIST_AFTER_ROTATION': True,
+    # Using symmetric HMAC SHA-512 for signing and verification => No problem since the server is not a trusted entity
+    'ALGORITHM': 'HS512',
+    # Signing key that is used to sign the content of generated token
+    'SIGNING_KEY': SECRET_KEY,
+    # The value is ignored since we're using symmetric HMAC singing
+    'VERIFYING_KEY': None,
+    # The authorization header name to be used for authentication.
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    # To send an authentication token to the server => Prefix the Token with JWT
+    # FORMAT => Authorization: JWT <token>
+    'AUTH_HEADER_TYPES': ('JWT',),
+    # DB field included in the token, username is unique and cannot be changed
+    'USER_ID_FIELD': 'username'
     # Make sure the old refresh token can no longer be used
-    'BLACKLIST_AFTER_ROTATION': True
 }
 # Replacing the default auth model with the modified abstract model from models.py
 # https://docs.djangoproject.com/en/4.1/topics/auth/customizing/#substituting-a-custom-user-model
