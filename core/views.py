@@ -66,7 +66,7 @@ class CustomUserViewSet(UserViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     # Override the '/users/me/' to prevent the modification of 'protected_symmetric_key' field by a user
     # The authenticated user can only retrieve its information
@@ -150,7 +150,7 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
@@ -162,7 +162,7 @@ class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, G
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     # Get => See my contact list
     def get_queryset(self):
@@ -215,7 +215,7 @@ class ContactDeclineViewSet(CreateModelMixin, GenericViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
@@ -227,7 +227,7 @@ class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     # Get => See my contact list
     def get_queryset(self):
@@ -266,7 +266,7 @@ class InvitationViewSet(CreateModelMixin, GenericViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_serializer_context(self):
         return {
@@ -333,7 +333,7 @@ class EventViewSet(
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):
