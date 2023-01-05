@@ -2,10 +2,11 @@ import uuid
 
 from rest_framework import serializers
 from core.models import User, Event, Invitation, ContactList, ContactRequest
-
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
+from django.core.mail import EmailMessage
+from django.conf import settings
 
 
 # ####################################################################################################@
@@ -73,20 +74,25 @@ class AddContactRequestSerializer(serializers.Serializer):
                 try:
                     for request in contact_request:
                         if request.is_active:
-                            raise Exception("You already sent a contact request.")
+                            print("You already sent a contact request.")
                     # If none are active, then create a new friend request
                     contact_request = ContactRequest(sender=active_member, receiver=receiver)
                     contact_request.save()
-                    payload['response'] = "Friend request sent."
+                    email = EmailMessage(
+                        'New contact request !',
+                        f'{active_member.username} just sent you a contact request !',
+                        settings.EMAIL_HOST_USER,
+                        [f'{receiver.email}']
+                    )
+                    email.send()
                 except Exception as e:
-                    payload['response'] = f"{e}"
+                   print(e)
             except ContactRequest.DoesNotExist:
                 # This user has never sent a friend request => Create one
                 contact_request = ContactRequest(sender=active_member, receiver=receiver)
                 contact_request.save()
-                payload['response'] = "Friend request sent."
         except Exception as e:
-            print(e)
+            print(f'The user {self.context["username_to_add"][0]} doesnt exist')
 
 
 # ####################################################################################################@
@@ -120,6 +126,24 @@ class AcceptContactSerializer(serializers.Serializer):
                 # Get any friend request active and not active between these 2
                 contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
                 contact_request.accept()
+                # Mail n°1
+                email_1 = EmailMessage(
+                    'New contact !',
+                    f'{sender.username} is now in your contact list',
+                    settings.EMAIL_HOST_USER,
+                    [f'{active_user.email}']
+                )
+                email_1.send()
+
+                # Mail n°2
+                email_2 = EmailMessage(
+                    'New contact !',
+                    f'{active_user.username} is now in your contact list',
+                    settings.EMAIL_HOST_USER,
+                    [f'{sender.email}']
+                )
+                email_2.send()
+
             except Exception as e:
                 print(e)
         except Exception as e:

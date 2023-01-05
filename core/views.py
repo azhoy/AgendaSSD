@@ -68,8 +68,8 @@ class CustomUserViewSet(UserViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
-    # Override the '/users/me/' to prevent the modification of 'protected_symmetric_key' field by a user
-    # The authenticated user can only retrieve its information
+    # Override the '/users/me/' endpoint to prevent the modification of fields by a malicious user
+    # Only allowing GET method for the authenticated user
     @action(["get"], detail=False)
     def me(self, request, *args, **kwargs):
         self.get_object = self.get_instance
@@ -118,17 +118,6 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
         except Exception as e:
             print(e)
 
-    """ 
-    @action(detail=False, methods=['GET'])
-    def my_events(self, request):
-        member = User.objects.get(id=request.user.id)
-        events = Event.objects.prefetch_related('creator').filter(creator_id=member.id)
-        event_dict = {}
-        for event in events:
-            serializer = EventSerializer(event)
-            event_dict[f'{event.id}'] = serializer.data
-        return Response(event_dict)
-    """
 
     def get_serializer_context(self):
         return {

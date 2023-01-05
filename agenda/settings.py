@@ -141,14 +141,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     # Auto type conversion from str to decimal
     'COERCE_DECIMAL_TO_STRING': False,
+    # JWT as default authentication system
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # Render information as JSON
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ]
 }
 
+# JWT options
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
     'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
@@ -170,6 +173,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
     # DB field included in the token, username is unique and cannot be changed
     'USER_ID_FIELD': 'username',
+    # Name of the key to the USER_ID_FIELD in the token
     'USER_ID_CLAIM': 'username'
 }
 # Replacing the default auth model with the modified abstract model from models.py
@@ -198,3 +202,11 @@ PASSWORD_HASHERS = [
     # 'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
     # 'django.contrib.auth.hashers.ScryptPasswordHasher',
 ]
+
+# SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'agenda.ssd.esi@gmail.com'  # TODO: Set in env variables
+EMAIL_HOST_PASSWORD = 'hcsbjxvqeqaeemmx'  # TODO: Set in env variables
