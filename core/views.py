@@ -339,21 +339,21 @@ class EventViewSet(
     def my_invitations(self, request):
         active_user = User.objects.get(id=request.user.id)
         invitations = Invitation.objects.filter(user_invited__id=active_user.id)
-        invitation_dict = {}
+        invitation_list = []
         for invitation in invitations:
             serializer = InvitationsSerializer(invitation)
-            invitation_dict[f'{invitation.id}'] = serializer.data
-        return Response(invitation_dict)
+            invitation_list.append(serializer.data)
+        return Response(invitation_list)
 
     @action(detail=False, methods=['GET'])
     def my_events(self, request):
         active_user = User.objects.get(id=request.user.id)
         events = Event.objects.prefetch_related('creator').filter(creator_id=active_user.id)
-        event_dict = {}
+        event_list = []
         for event in events:
             serializer = MyCreatedEventsSerializer(event)
-            event_dict[f'{event.id}'] = serializer.data
-        return Response(event_dict)
+            event_list.append(serializer.data)
+        return Response(event_list)
 
     def update(self, request, *args, **kwargs):
         member = User.objects.get(id=request.user.id)

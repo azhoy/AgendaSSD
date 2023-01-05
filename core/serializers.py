@@ -286,10 +286,12 @@ class EventSerializer(serializers.ModelSerializer):
         ]
 
 class MyCreatedEventsSerializer(serializers.ModelSerializer):
+    event_id = serializers.UUIDField(source='id', read_only=True)
 
     class Meta:
         model = Event
         fields = [
+            'event_id',
             'title',
             'start_date',
             'end_date',
