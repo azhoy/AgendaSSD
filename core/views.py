@@ -14,7 +14,7 @@ from .models import Event, User, Invitation, ContactList, ContactRequest
 from .serializers import (
     ContactSerializer, AddContactRequestSerializer, ContactRequestSerializer, HideContactSerializer,
     AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer,
-    EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
+    MyCreatedEventsSerializer, EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
 
 
@@ -351,7 +351,7 @@ class EventViewSet(
         events = Event.objects.prefetch_related('creator').filter(creator_id=active_user.id)
         event_dict = {}
         for event in events:
-            serializer = EventSerializer(event)
+            serializer = MyCreatedEventsSerializer(event)
             event_dict[f'{event.id}'] = serializer.data
         return Response(event_dict)
 
