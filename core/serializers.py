@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from rest_framework import serializers
 from core.models import User, Event, Invitation, ContactList, ContactRequest
@@ -9,6 +8,40 @@ from djoser.serializers import (
 from django.core.mail import EmailMessage
 from django.conf import settings
 
+
+# ####################################################################################################@
+# Logger configuration
+# ####################################################################################################@
+
+class RecordCounter:
+    _instance = None
+    _count = 0
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = object.__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    def count(self):
+        self._count += 1
+        return self._count
+
+
+class ContextFilter(logging.Filter):
+    def filter(self, record):
+        record.record_number = RecordCounter().count()
+        return True
+
+
+logging.basicConfig(level=logging.WARNING,
+                    format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.FileHandler(settings.LOGS_FILE),
+                        logging.StreamHandler()
+                    ])
+
+logger = logging.getLogger(__name__)
+logger.addFilter(ContextFilter())
 
 # ####################################################################################################@
 # User Serializers
@@ -93,9 +126,9 @@ class AddContactRequestSerializer(serializers.Serializer):
                     contact_request = ContactRequest(sender=active_member, receiver=receiver)
                     contact_request.save()
             except User.DoesNotExist:
-                logging.info(f"{active_member.username} tried to contact request a user that does not exist")
+                logger.info(f"{active_member.username} tried to contact request a user that does not exist")
         except User.DoesNotExist:
-            logging.critical(
+            logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
             )
             # Mail to admin
@@ -106,7 +139,6 @@ class AddContactRequestSerializer(serializers.Serializer):
                 [f'{settings.ADMIN_EMAIL_ALERT}']
             )
             alert_email.send()
-
 
 
 # ####################################################################################################@
@@ -159,11 +191,11 @@ class AcceptContactSerializer(serializers.Serializer):
                     email_2.send()
 
                 except ContactRequest.DoesNotExist:
-                    logging.info(f"{active_user.username} tried to accept a user that did not invite him")
+                    logger.info(f"{active_user.username} tried to accept a user that did not invite him")
             except User.DoesNotExist:
-                logging.info(f"{active_user.username} tried to accept a user that does not exist")
+                logger.info(f"{active_user.username} tried to accept a user that does not exist")
         except User.DoesNotExist:
-            logging.critical(
+            logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
             )
             # Mail to admin
@@ -174,7 +206,6 @@ class AcceptContactSerializer(serializers.Serializer):
                 [f'{settings.ADMIN_EMAIL_ALERT}']
             )
             alert_email.send()
-
 
 
 class DeclineContactSerializer(serializers.Serializer):
@@ -192,11 +223,11 @@ class DeclineContactSerializer(serializers.Serializer):
                     contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
                     contact_request.decline()
                 except ContactRequest.DoesNotExist:
-                    logging.info(f"{active_user.username} tried to decline a user that did not invite him")
+                    logger.info(f"{active_user.username} tried to decline a user that did not invite him")
             except User.DoesNotExist:
-                logging.info(f"{active_user.username} tried to decline a user that does not exist")
+                logger.info(f"{active_user.username} tried to decline a user that does not exist")
         except User.DoesNotExist:
-            logging.critical(
+            logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
             )
             # Mail to admin
@@ -207,7 +238,6 @@ class DeclineContactSerializer(serializers.Serializer):
                 [f'{settings.ADMIN_EMAIL_ALERT}']
             )
             alert_email.send()
-
 
 
 class DeleteContactSerializer(serializers.Serializer):
@@ -225,11 +255,12 @@ class DeleteContactSerializer(serializers.Serializer):
                     contact_list = ContactList.objects.get(user=active_member)
                     contact_list.unfriend(removee=removee)
                 except ContactList.DoesNotExist:
-                    logging.warning(f"{active_member.username} does not have a contact list. User not created normally !")
+                    logger.warning(
+                        f"{active_member.username} does not have a contact list. User not created normally !")
             except User.DoesNotExist:
-                logging.info(f"{active_member.username} tried to delete a user that does not exist")
+                logger.info(f"{active_member.username} tried to delete a user that does not exist")
         except User.DoesNotExist:
-            logging.critical(
+            logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
             )
             # Mail to admin
@@ -315,17 +346,17 @@ class AddInvitationsSerializer(serializers.Serializer):
                             # Updating the list of participants
                             event.update_participants(self.context['protected_participants_list'][0])
                         else:
-                            logging.info(
+                            logger.info(
                                 f"{active_member.username} tried to invite {user_invited.username} but this user is not in its contact list")
                     else:
-                        logging.warning(
+                        logger.warning(
                             f"{active_member.username} tried to invite {user_invited.username} to {event.creator.username} event")
                 except User.DoesNotExist:
-                    logging.info(f'{active_member.username} tried to invite a user that doesnt exist to an event')
+                    logger.info(f'{active_member.username} tried to invite a user that doesnt exist to an event')
             except Exception as e:
-                logging.warning(f'{active_member.username} tried to access an invalid event via the URL')
+                logger.warning(f'{active_member.username} tried to access an invalid event via the URL')
         except User.DoesNotExist:
-            logging.critical(
+            logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
             )
             # Mail to admin
@@ -426,8 +457,9 @@ class AddEventSerializer(serializers.Serializer):
                 description=self.context['description'][0],
                 location=self.context['location'][0],
             )
+            logger.info(f"{active_user.username} created an event")
         except User.DoesNotExist:
-            logging.critical(
+            logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
             )
             # Mail to admin
@@ -438,8 +470,6 @@ class AddEventSerializer(serializers.Serializer):
                 [f'{settings.ADMIN_EMAIL_ALERT}']
             )
             alert_email.send()
-
-
 
 
 class HideEventsSerializers(serializers.ModelSerializer):

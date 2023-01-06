@@ -165,7 +165,6 @@ REST_FRAMEWORK = {
 # TODO: Set in env variable genreated automattically
 # openssl genrsa -out jwt-key 4096
 RSA_SIGNING_KEY = Path(BASE_DIR/'jwt-key').read_text()
-print(RSA_SIGNING_KEY)
 
 # TODO: Set in env variable genreated automattically
 # openssl rsa -in jwt-key -pubout > jwt-key.pub
@@ -227,13 +226,3 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'agenda.ssd.esi@gmail.com'  # TODO: Set in env variables
 EMAIL_HOST_PASSWORD = 'hcsbjxvqeqaeemmx'  # TODO: Set in env variables
 ADMIN_EMAIL_ALERT = 'beck.ragas0m@icloud.com'  # TODO: Set in env variables
-
-# logger configuration
-# Logs levels: DEBUG < INFO < WARNING < ERROR < CRITICAL
-# All events at or above WARNING level will now get logged.
-logging.basicConfig(level=logging.WARNING,
-                    format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=[
-                        logging.FileHandler(LOGS_FILE),
-                        logging.StreamHandler()
-                    ])

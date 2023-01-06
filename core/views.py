@@ -1,4 +1,3 @@
-import logging
 from djoser.views import UserViewSet
 from djoser.conf import settings as djoser_settings
 from rest_framework.decorators import action
@@ -17,8 +16,6 @@ from .serializers import (
     AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer,
     MyCreatedEventsSerializer, EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
-
-
 
 
 # ####################################################################################################@
