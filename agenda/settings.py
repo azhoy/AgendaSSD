@@ -159,7 +159,18 @@ REST_FRAMEWORK = {
     ]
 }
 
+
 # JWT options
+
+# TODO: Set in env variable genreated automattically
+# openssl genrsa -out jwt-key 4096
+RSA_SIGNING_KEY = Path(BASE_DIR/'jwt-key').read_text()
+print(RSA_SIGNING_KEY)
+
+# TODO: Set in env variable genreated automattically
+# openssl rsa -in jwt-key -pubout > jwt-key.pub
+RSA_VERIFYING_KEY = Path(BASE_DIR/'jwt-key.pub').read_text()
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
     'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
@@ -168,12 +179,9 @@ SIMPLE_JWT = {
     # Causes refresh tokens submitted to the refresh endpoints to be added to the blacklist
     # Prevent them from being reused
     'BLACKLIST_AFTER_ROTATION': True,
-    # Using symmetric HMAC SHA-512 for signing and verification => No problem since the server is not a trusted entity
-    'ALGORITHM': 'HS512',
-    # Signing key that is used to sign the content of generated token
-    'SIGNING_KEY': SECRET_KEY,
-    # The value is ignored since we're using symmetric HMAC singing
-    'VERIFYING_KEY': None,
+    'ALGORITHM': 'RS256',
+    'SIGNING_KEY': RSA_SIGNING_KEY,
+    'VERIFYING_KEY': RSA_VERIFYING_KEY,
     # The authorization header name to be used for authentication.
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     # To send an authentication token to the server => Prefix the Token with JWT
