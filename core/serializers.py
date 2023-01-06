@@ -104,7 +104,7 @@ class AddContactRequestSerializer(serializers.Serializer):
             active_member = User.objects.get(username=self.context['username'])
             # Getting the receiver of the friend request user object
             try:
-                receiver = User.objects.get(username=self.context['username_to_add'][0])
+                receiver = User.objects.get(username=self.context['username_to_add'])
                 try:
                     # Get any friend request active and not active between these 2
                     contact_request = ContactRequest.objects.filter(sender=active_member, receiver=receiver)
@@ -112,7 +112,8 @@ class AddContactRequestSerializer(serializers.Serializer):
                     try:
                         for request in contact_request:
                             if request.is_active:
-                                print("You already sent a contact request.")
+                                # print("You already sent a contact request.")
+                                pass
                         # If none are active, then create a new friend request
                         contact_request = ContactRequest(sender=active_member, receiver=receiver)
                         contact_request.save()
@@ -145,10 +146,6 @@ class AddContactRequestSerializer(serializers.Serializer):
             alert_email.send()
 
 
-# ####################################################################################################@
-# Contact Request Serializers
-# ####################################################################################################@
-
 class ContactRequestSerializer(serializers.ModelSerializer):
     sender = serializers.CharField(source='sender.username', read_only=True)
     receiver = serializers.CharField(source='receiver.username', read_only=True)
@@ -171,7 +168,7 @@ class AcceptContactSerializer(serializers.Serializer):
             active_user = User.objects.get(username=self.context['username'])
             # Getting the receiver of the friend request user object
             try:
-                sender = User.objects.get(username=self.context['username_to_accept'][0])
+                sender = User.objects.get(username=self.context['username_to_accept'])
                 try:
                     # Get any friend request active and not active between these 2
                     contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
@@ -221,7 +218,7 @@ class DeclineContactSerializer(serializers.Serializer):
             active_user = User.objects.get(username=self.context['username'])
             # Getting the receiver of the friend request user object
             try:
-                sender = User.objects.get(username=self.context['username_to_decline'][0])
+                sender = User.objects.get(username=self.context['username_to_decline'])
                 try:
                     # Get any friend request active and not active between these 2
                     contact_request = ContactRequest.objects.get(sender=sender, receiver=active_user, is_active=True)
@@ -253,7 +250,7 @@ class DeleteContactSerializer(serializers.Serializer):
             active_member = User.objects.get(username=self.context['username'])
             # Getting the receiver of the friend request user object
             try:
-                removee = User.objects.get(username=self.context['username_to_delete'][0])
+                removee = User.objects.get(username=self.context['username_to_delete'])
                 try:
                     # Get any friend request active and not active between these 2
                     contact_list = ContactList.objects.get(user=active_member)

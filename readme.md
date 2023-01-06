@@ -104,7 +104,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /contacts/all/
+- **URL**: /contacts/send_contact_request/
 - **Method**: POST
 - **Request**:
   - username_to_add
@@ -116,7 +116,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /contacts/requests/
+- **URL**: /contacts/my_contact_requests/
 - **Method**: GET
 - **Request**:
 - **Response**
@@ -127,7 +127,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /contacts/requests/
+- **URL**: /contacts/accept_contact_requests/
 - **Method**: POST
 - **Request**:
   - username_to_accept
@@ -139,7 +139,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /contacts/decline_request/
+- **URL**: /contacts/decline_contact_requests/
 - **Method**: POST
 - **Request**:
   - username_to_decline

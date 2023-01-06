@@ -106,7 +106,7 @@ class CustomUserViewSet(UserViewSet):
 # Contacts Viewset
 # ####################################################################################################@
 
-class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+class ContactViewSet(ListModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Get => See my contact list
@@ -118,18 +118,39 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
         except Exception as e:
             print(e)
 
-
     def get_serializer_context(self):
         return {
             'request': self.request,
             'username': self.request.user.username,
-            'username_to_add': self.request.POST.getlist('username_to_add'),
         }
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return ContactSerializer
-        elif self.request.method == 'POST':
+        return HideContactSerializer
+
+
+class AddContactRequestViewSet(CreateModelMixin, GenericViewSet):
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
+    # Get => See my contact list
+    def get_queryset(self):
+        active_username = self.request.user.username,
+        try:
+            contact_list = ContactList.objects.filter(user__username=active_username[0])
+            return contact_list
+        except Exception as e:
+            print(e)
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'username': self.request.user.username,
+            'username_to_add': self.request.data['username_to_add']
+        }
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
             return AddContactRequestSerializer
         return HideContactSerializer
 
@@ -142,7 +163,27 @@ class ContactViewSet(CreateModelMixin, ListModelMixin, RetrieveModelMixin, Updat
         return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class SeeContactRequestViewSet(ListModelMixin, GenericViewSet):
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
+    # Get => See my contact list
+    def get_queryset(self):
+        user = self.request.user
+        contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
+        return contact_requests
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'username': self.request.user.username,
+        }
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return ContactRequestSerializer
+        return HideContactSerializer
+
+class AcceptContactRequestViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Overriding default create method to remove extra information
@@ -157,25 +198,22 @@ class ContactAcceptViewSet(CreateModelMixin, ListModelMixin, UpdateModelMixin, G
     def get_queryset(self):
         user = self.request.user
         contact_requests = ContactRequest.objects.filter(receiver=user, is_active=True)
-        print(contact_requests)
         return contact_requests
 
     def get_serializer_context(self):
         return {
             'request': self.request,
             'username': self.request.user.username,
-            'username_to_accept': self.request.POST.getlist('username_to_accept')
+            'username_to_accept': self.request.data['username_to_accept']
         }
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return ContactRequestSerializer
-        elif self.request.method == 'POST':
+        if self.request.method == 'POST':
             return AcceptContactSerializer
         return HideContactSerializer
 
 
-class ContactDeclineViewSet(CreateModelMixin, GenericViewSet):
+class DeclineContactRequestViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Get => See my contact list
@@ -188,13 +226,11 @@ class ContactDeclineViewSet(CreateModelMixin, GenericViewSet):
         return {
             'request': self.request,
             'username': self.request.user.username,
-            'username_to_decline': self.request.POST.getlist('username_to_decline')
+            'username_to_decline': self.request.data['username_to_decline']
         }
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return ContactRequestSerializer
-        elif self.request.method == 'POST':
+        if self.request.method == 'POST':
             return DeclineContactSerializer
         return HideContactSerializer
 
@@ -207,7 +243,7 @@ class ContactDeclineViewSet(CreateModelMixin, GenericViewSet):
         return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
+class DeleteContactViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Overriding default create method to remove extra information
@@ -228,7 +264,7 @@ class ContactDeleteViewSet(CreateModelMixin, GenericViewSet):
         return {
             'request': self.request,
             'username': self.request.user.username,
-            'username_to_delete': self.request.POST.getlist('username_to_delete')
+            'username_to_delete': self.request.data['username_to_delete']
         }
 
     def get_serializer_class(self):
@@ -278,6 +314,7 @@ class CreateEventViewSet(
 ):
     queryset = Event.objects.prefetch_related('creator').all()
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return AddEventSerializer
@@ -304,6 +341,7 @@ class CreateEventViewSet(
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class EventViewSet(
     # ListModelMixin,
@@ -339,7 +377,6 @@ class EventViewSet(
         else:
             # Serializer to hide events details in the endpoint for non-related user
             return EventSerializer
-
 
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):

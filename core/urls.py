@@ -29,17 +29,26 @@ user_router.register('users', viewset=views.CustomUserViewSet, basename='users')
 contact_router = routers.DefaultRouter()
 contact_router.register('all', viewset=views.ContactViewSet, basename='all')
 
-# /contacts/requests/
-contact_accept_requests_router = routers.DefaultRouter()
-contact_accept_requests_router.register('requests', viewset=views.ContactAcceptViewSet, basename='requests')
+# /contacts/send_contact_request/
+send_contact_request_router = routers.DefaultRouter()
+send_contact_request_router.register('send_contact_request', viewset=views.AddContactRequestViewSet, basename='send_contact_request')
 
-# /contacts/decline_requests/
-contact_decline_request_router = routers.DefaultRouter()
-contact_decline_request_router.register('decline_request', viewset=views.ContactDeclineViewSet, basename='decline_request')
+# /contacts/contact_requests/
+contact_requests_router = routers.DefaultRouter()
+contact_requests_router.register('my_contact_requests', viewset=views.SeeContactRequestViewSet, basename='my_contact_requests')
+
+
+# /contacts/accept_contact_requests/
+accept_contact_requests_router = routers.DefaultRouter()
+accept_contact_requests_router.register('accept_contact_requests', viewset=views.AcceptContactRequestViewSet, basename='accept_contact_requests')
+
+# /contacts/decline_contact_requests/
+decline_contact_requests_router = routers.DefaultRouter()
+decline_contact_requests_router.register('decline_contact_requests', viewset=views.DeclineContactRequestViewSet, basename='decline_contact_requests')
 
 # /contacts/delete_contact/
-contact_delete_router = routers.DefaultRouter()
-contact_delete_router.register('delete_contact', viewset=views.ContactDeleteViewSet, basename='delete_contact')
+delete_contact_router = routers.DefaultRouter()
+delete_contact_router.register('delete_contact', viewset=views.DeleteContactViewSet, basename='delete_contact')
 
 app_name = 'core'
 # URLConf
@@ -49,9 +58,11 @@ urlpatterns = [
     path('', include(create_event_router.urls)),
     path('', include(user_router.urls)),
     path('contacts/', include(contact_router.urls)),
-    path('contacts/', include(contact_accept_requests_router.urls)),
-    path('contacts/', include(contact_decline_request_router.urls)),
-    path('contacts/', include(contact_delete_router.urls)),
+    path('contacts/', include(send_contact_request_router.urls)),
+    path('contacts/', include(contact_requests_router.urls)),
+    path('contacts/', include(accept_contact_requests_router.urls)),
+    path('contacts/', include(decline_contact_requests_router.urls)),
+    path('contacts/', include(delete_contact_router.urls)),
     re_path(r"^jwt/create/?", jwtviews.TokenObtainPairView.as_view(), name="jwt-create"),
     re_path(r"^jwt/refresh/?", jwtviews.TokenRefreshView.as_view(), name="jwt-refresh"),
 ]
