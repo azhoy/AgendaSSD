@@ -9,12 +9,20 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+import logging
 import os
 from pathlib import Path
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Logs file path
+LOGS_FILE = BASE_DIR / 'logs' / 'agenda.log'
+
+# Create the log file if it doesn't exist
+if not LOGS_FILE.exists():
+    LOGS_FILE.touch(exist_ok=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -118,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Brussels'
 
 USE_I18N = True
 
@@ -210,3 +218,14 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'agenda.ssd.esi@gmail.com'  # TODO: Set in env variables
 EMAIL_HOST_PASSWORD = 'hcsbjxvqeqaeemmx'  # TODO: Set in env variables
+ADMIN_EMAIL_ALERT = 'beck.ragas0m@icloud.com'  # TODO: Set in env variables
+
+# logger configuration
+# Logs levels: DEBUG < INFO < WARNING < ERROR < CRITICAL
+# All events at or above WARNING level will now get logged.
+logging.basicConfig(level=logging.WARNING,
+                    format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.FileHandler(LOGS_FILE),
+                        logging.StreamHandler()
+                    ])
