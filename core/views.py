@@ -8,7 +8,7 @@ from rest_framework.mixins import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.viewsets import GenericViewSet
 
 from .models import Event, User, Invitation, ContactList, ContactRequest
 from .serializers import (
@@ -272,11 +272,41 @@ class InvitationViewSet(CreateModelMixin, GenericViewSet):
 # ####################################################################################################@
 # Event Viewsets
 # ####################################################################################################@
+class CreateEventViewSet(
+    CreateModelMixin,
+    GenericViewSet
+):
+    queryset = Event.objects.prefetch_related('creator').all()
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return AddEventSerializer
+        else:
+            # Serializer to hide events details in the endpoint for non-related user
+            return HideEventsSerializers
 
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'username': self.request.user.username,
+            'protected_event_key': self.request.data['protected_event_key'],
+            'title': self.request.data['title'],
+            'start_date': self.request.data['start_date'],
+            'end_date': self.request.data['end_date'],
+            'description': self.request.data['description'],
+            'location': self.request.data['location']
+        }
+
+    # Overriding default create method to remove extra information
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
 class EventViewSet(
     # ListModelMixin,
-    CreateModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,
@@ -297,12 +327,6 @@ class EventViewSet(
         return {
             'request': self.request,
             'username': self.request.user.username,
-            'protected_event_key': self.request.POST.getlist('protected_event_key'),
-            'title': self.request.POST.getlist('title'),
-            'start_date': self.request.POST.getlist('start_date'),
-            'end_date': self.request.POST.getlist('end_date'),
-            'description': self.request.POST.getlist('description'),
-            'location': self.request.POST.getlist('location'),
         }
 
     def get_serializer_class(self):
@@ -316,13 +340,6 @@ class EventViewSet(
             # Serializer to hide events details in the endpoint for non-related user
             return EventSerializer
 
-    # Overriding default create method to remove extra information
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=['GET'])
     def my_invitations(self, request):

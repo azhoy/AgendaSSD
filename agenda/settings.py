@@ -156,19 +156,19 @@ REST_FRAMEWORK = {
     # Render information as JSON
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ]
 }
-
 
 # JWT options
 
 # TODO: Set in env variable genreated automattically
 # openssl genrsa -out jwt-key 4096
-RSA_SIGNING_KEY = Path(BASE_DIR/'jwt-key').read_text()
+RSA_SIGNING_KEY = Path(BASE_DIR / 'jwt-key').read_text()
 
 # TODO: Set in env variable genreated automattically
 # openssl rsa -in jwt-key -pubout > jwt-key.pub
-RSA_VERIFYING_KEY = Path(BASE_DIR/'jwt-key.pub').read_text()
+RSA_VERIFYING_KEY = Path(BASE_DIR / 'jwt-key.pub').read_text()
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!

@@ -166,7 +166,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /events/
+- **URL**: /create_events/
 - **Method**: POST
 - **Request**:
   - protected_event_key

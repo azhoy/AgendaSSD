@@ -8,6 +8,9 @@ from djoser.serializers import (
 from django.core.mail import EmailMessage
 from django.conf import settings
 
+from django.db import IntegrityError, transaction
+
+
 
 # ####################################################################################################@
 # Logger configuration
@@ -34,7 +37,8 @@ class ContextFilter(logging.Filter):
 
 
 logging.basicConfig(level=logging.WARNING,
-                    format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    #format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
                         logging.FileHandler(settings.LOGS_FILE),
                         logging.StreamHandler()
@@ -443,6 +447,7 @@ class AddEventSerializer(serializers.Serializer):
     description = serializers.CharField(allow_blank=True, allow_null=True)
     location = serializers.CharField(allow_blank=True, allow_null=True)
 
+
     def save(self, **kwargs):
         try:
             # Get the user profile
@@ -450,12 +455,12 @@ class AddEventSerializer(serializers.Serializer):
             # Save the event
             Event.objects.create(
                 creator=active_user,
-                protected_event_key=self.context['protected_event_key'][0],
-                title=self.context['title'][0],
-                start_date=self.context['start_date'][0],
-                end_date=self.context['end_date'][0],
-                description=self.context['description'][0],
-                location=self.context['location'][0],
+                protected_event_key=self.context['protected_event_key'],
+                title=self.context['title'],
+                start_date=self.context['start_date'],
+                end_date=self.context['end_date'],
+                description=self.context['description'],
+                location=self.context['location'],
             )
             logger.info(f"{active_user.username} created an event")
         except User.DoesNotExist:

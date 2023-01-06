@@ -6,14 +6,17 @@ from rest_framework_simplejwt import views as jwtviews
 
 from . import views
 
-# /agenda/events/
+# /events/
 event_router = routers.DefaultRouter()
 event_router.register('events', viewset=views.EventViewSet, basename='events')
 
 # /events/<event_uuid>/invitations/
-# /agenda/events/<event_uuid>/invitations/
 invitation_router = routers.NestedDefaultRouter(event_router, 'events', lookup='event')
 invitation_router.register('invitations', viewset=views.InvitationViewSet, basename='event-invitations')
+
+# /create_events/
+create_event_router = routers.DefaultRouter()
+create_event_router.register('create_events', viewset=views.CreateEventViewSet, basename='create_events')
 
 # /users/
 # /users/me/
@@ -26,15 +29,15 @@ user_router.register('users', viewset=views.CustomUserViewSet, basename='users')
 contact_router = routers.DefaultRouter()
 contact_router.register('all', viewset=views.ContactViewSet, basename='all')
 
-# /requests/
+# /contacts/requests/
 contact_accept_requests_router = routers.DefaultRouter()
 contact_accept_requests_router.register('requests', viewset=views.ContactAcceptViewSet, basename='requests')
 
-# /agenda/requests/
+# /contacts/decline_requests/
 contact_decline_request_router = routers.DefaultRouter()
 contact_decline_request_router.register('decline_request', viewset=views.ContactDeclineViewSet, basename='decline_request')
 
-# /agenda/delete_contact/
+# /contacts/delete_contact/
 contact_delete_router = routers.DefaultRouter()
 contact_delete_router.register('delete_contact', viewset=views.ContactDeleteViewSet, basename='delete_contact')
 
@@ -43,6 +46,7 @@ app_name = 'core'
 urlpatterns = [
     path('', include(event_router.urls)),
     path('', include(invitation_router.urls)),
+    path('', include(create_event_router.urls)),
     path('', include(user_router.urls)),
     path('contacts/', include(contact_router.urls)),
     path('contacts/', include(contact_accept_requests_router.urls)),
