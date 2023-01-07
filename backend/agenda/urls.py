@@ -20,5 +20,5 @@ from django.urls import path, include
 #                           CustomLoginView, RegisterPage, LogoutView)
 
 urlpatterns = [
-    path('', include('core.urls')),
+    path('', include('backend.core.urls')),
 ]

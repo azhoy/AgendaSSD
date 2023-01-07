@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+import corsheaders.middleware
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,25 +24,18 @@ LOGS_FILE = BASE_DIR / 'logs' / 'agenda.log'
 
 # Create the log file if it doesn't exist
 if not LOGS_FILE.exists():
-    LOGS_FILE.touch(exist_ok=True)
+    LOGS_FILE.touch(exist_ok=False)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# At least 512bits => Bc of HMAC SHA-512
-# TODO: Set from Env Variables in prod (=> installation script)
-SECRET_KEY = ')+e@9!)1e98&-=074+6&3b5d)7+))b(10f111-0-2bc13ded0@fb3b=1)d5**7=013=!*7f0*)cb00)ec@@d&8e*&!!b!)7cbb2e=a' \
-             '38@b)fcfb&eac@71e9ca@2e@0)+++&+1c08**(=!f&0368@+b656+fc!563(b*e05*(a+7=df6&c(9+9af!476!!&3b9b9)-=(a-+8' \
-             '8e(+-@!34&51d*-=0)=-ccb4@a6+41806ec!@83)a2fdf@=@4(08+3ea6*(8*d8+95fd&13!d52e528(9*2f!*)*64!e*a-75c9605' \
-             '=))eebef1+dd3d21da@b@bd@3fa&+80+9(67c@bd0-1d=cc479@-4e&(+)35d-fc1=-f-2*(@96cb0+93b0+43+4-32f@9)9-)@=&+' \
-             '35c50=((b!*(69c&2cb8c&d65c33f)ba!eba323a)9da@0a4)e2de!1&05a0510-d@1@7-*a+70&0a-9*&4d=9@30-6(@b5-e404f-@('
+SECRET_KEY = 'django-insecure-x443m1!zfpcc(!rk@&fis+h9yjv=mj9*pq--0vxd&)jpkl@y9*'  # TODO: Set from Evn Variables in prod (=> installation script)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  # TODO: Remove debug in production
 
-# A list of strings representing the host/domain names that this Django site can serve.
-ALLOWED_HOSTS = []  # TODO: Set in production
+ALLOWED_HOSTS = ["127.0.0.1"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -50,15 +45,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework_simplejwt.token_blacklist',
-    'rest_framework',
-    'djoser',
+    'django_filters',  # 3rd
+    'rest_framework',  # 3rd
+    'djoser',  # 3rd
+    'corsheaders',  # 3rd
     'core',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -66,7 +63,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'agenda.urls'
+INTERNAL_IPS = [
+    "127.0.0.1"
+]
+
+ROOT_URLCONF = 'backend.agenda.urls'
+CORS_URLS_REGEX = r"^/.*"
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5174',
+    'http://localhost:10533'
+]
+TEMPLATE_CORE_DIR = BASE_DIR / 'core' / 'templates' / 'core'
 
 TEMPLATES = [
     {
@@ -91,12 +98,8 @@ WSGI_APPLICATION = 'agenda.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'agenda',
-        'USER': 'dbuser',
-        'PASSWORD': 'P@$$w0rd',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -170,8 +173,13 @@ RSA_SIGNING_KEY = Path(BASE_DIR / 'jwt-key').read_text()
 # openssl rsa -in jwt-key -pubout > jwt-key.pub
 RSA_VERIFYING_KEY = Path(BASE_DIR / 'jwt-key.pub').read_text()
 
+# JSON WEB TOKEN parameters =>  TODO: Replace with Ayoub implementation
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
+    # To send an authentication token to the server => Prefix the Token with JWT
+    # JWT <token>
+    'AUTH_HEADER_TYPES': ('JWT',),
+    # Lifetime of the JSON Web Token
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=15),  # TODO: CHANGE IN PROD !!!
     'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
     # A new refresh token is submitted when using the refresh token endpoint
     'ROTATE_REFRESH_TOKENS': True,
@@ -203,6 +211,7 @@ DJOSER = {
     'SET_PASSWORD_RETYPE': True,
     'TOKEN_MODEL': None,
     'SERIALIZERS': {
+        # Custom User Serializers with 'id', 'username', 'password' and 'protected_symmetric_key' fields
         'user_create': 'core.serializers.UserCreateSerializer',
         'user': 'core.serializers.UserSerializer',
         'current_user': 'core.serializers.UserSerializer',

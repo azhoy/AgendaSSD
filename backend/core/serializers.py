@@ -1,15 +1,12 @@
 import logging
 
 from rest_framework import serializers
-from core.models import User, Event, Invitation, ContactList, ContactRequest
+from backend.core.models import User, Event, Invitation, ContactList, ContactRequest
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
 from django.core.mail import EmailMessage
 from django.conf import settings
-
-from django.db import IntegrityError, transaction
-
 
 
 # ####################################################################################################@

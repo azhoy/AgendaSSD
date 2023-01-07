@@ -1,4 +1,3 @@
-from django.views.generic import TemplateView
 from django.urls import path, include, re_path
 
 from rest_framework_nested import routers

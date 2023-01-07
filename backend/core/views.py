@@ -118,6 +118,23 @@ class ContactViewSet(ListModelMixin, GenericViewSet):
         except Exception as e:
             print(e)
 
+    @action(detail=False, methods=['GET'])
+    def my_contacts(self, request):
+        member = User.objects.get(id=request.user.id)
+        try:
+            contact_list = ContactList.objects.filter(user__username=member.username)
+            contacts = []
+            for contact in contact_list.all():
+                contact_dict = {}
+                for elem in contact.get_contact_info():
+                    contact_dict[f"user_id"] = elem['id']
+                    contact_dict[f"username"] = elem['username']
+                    contacts.append(contact_dict)
+                    contact_dict = {}
+            return Response(contacts)
+        except Exception as e:
+            print(e)
+
     def get_serializer_context(self):
         return {
             'request': self.request,
