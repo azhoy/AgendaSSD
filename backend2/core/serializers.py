@@ -1,7 +1,7 @@
 import logging
 
 from rest_framework import serializers
-from backend.core.models import User, Event, Invitation, ContactList, ContactRequest
+from core.models import User, Event, Invitation, ContactList, ContactRequest
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
@@ -33,16 +33,20 @@ class ContextFilter(logging.Filter):
         return True
 
 
+# Deactivating all the default module loggers
+for name, logger in logging.root.manager.loggerDict.items():
+    logger.disabled = True
+
+# Creating a custom loggers that add sequence number to logs
 logging.basicConfig(level=logging.WARNING,
-                    #format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
-                    format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
                         logging.FileHandler(settings.LOGS_FILE),
                         logging.StreamHandler()
                     ])
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(name="agenda_logger")
 logger.addFilter(ContextFilter())
+
 
 # ####################################################################################################@
 # User Serializers
@@ -440,7 +444,6 @@ class AddEventSerializer(serializers.Serializer):
     end_date = serializers.CharField(allow_blank=True, allow_null=True)
     description = serializers.CharField(allow_blank=True, allow_null=True)
     location = serializers.CharField(allow_blank=True, allow_null=True)
-
 
     def save(self, **kwargs):
         try:

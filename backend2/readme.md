@@ -2,7 +2,6 @@
 ## 1. Models
 
 ## 2. Features
-
 ### A) User registration, authentication and revocation
 #### Register 
 - **URL**: /users/
@@ -19,33 +18,68 @@
   - HTTP_201_CREATED
   - HTTP_400_BAD_REQUEST
   
-#### Change email
-(TODO: Send confirmation link to email + SET_USERNAME_RETYPE = True)
-- **Header** : 
-  - Key : Authorization
-  - Value: JWT <access_token>
-- **URL**: /users/set_email/
+#### Activate an account (*)
+- **URL**: #/activate/{uid}/{token}
+- **URL**: /users/activation/
 - **Method**: POST
 - **Request**:
-  - new_email
-  - re_new_email
-  - current_password
-- Response
+  - uid
+  - token
+- **Response**
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
-    
-#### Change password 
-(TODO: Send confirmation link to email + SET_PASSWORD_RETYPE = True)
-- **Header** : 
-  - Key : Authorization
-  - Value: JWT <access_token>
-- **URL**: /users/set_password/
+  - HTTP_403_FORBIDDEN (If already activated)
+
+#### Resend activation email
+- **URL**:/users/resend_activation/
 - **Method**: POST
 - **Request**:
+  - email
+- **Response**
+  - HTTP_204_NO_CONTENT
+  - HTTP_400_BAD_REQUEST
+
+
+#### Reset username
+- **URL**:#/username/reset/confirm/{uid}/{token}
+- **URL**:/users/reset_email/
+- **Method**: POST
+- **Request**:
+  - email
+- **Response**
+  - HTTP_204_NO_CONTENT
+  - HTTP_400_BAD_REQUEST
+    -  email
+
+#### Reset username confirmation (*)
+- **URL**:/users/reset_email/
+- **Method**: POST
+- **Request**:
+  - uid
+  - token
+  - new_email
+  - re_new_email
+- **Response**
+  - HTTP_204_NO_CONTENT
+
+#### Reset password
+- **URL**:#/password/reset/confirm/{uid}/{token}
+- **URL**:/users/reset_email/
+- **Method**: POST
+- **Request**:
+  - email
+- **Response**
+  - HTTP_204_NO_CONTENT
+
+ #### Reset password confirmation (*)
+- **URL**:/users/reset_email/
+- **Method**: POST
+- **Request**:
+  - uid
+  - token
   - new_password
   - re_new_password
-  - current_password
-- Response
+- **Response**
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
   
@@ -93,7 +127,7 @@
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /contacts/all/
+- **URL**: /contacts/all/my_contacts/
 - **Method**: GET
 - **Request**:
 - **Response**

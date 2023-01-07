@@ -25,42 +25,13 @@ from .serializers import (
 
 class CustomUserViewSet(UserViewSet):
 
-    def get_permissions(self):
-        if self.action == "create":
-            self.permission_classes = djoser_settings.PERMISSIONS.user_create  # ["rest_framework.permissions.AllowAny"]
-        elif self.action == "list":
-            self.permission_classes = djoser_settings.PERMISSIONS.user_list  # ["djoser.permissions.CurrentUserOrAdmin"]
-        elif self.action == "set_password":
-            self.permission_classes = djoser_settings.PERMISSIONS.set_password  # ["djoser.permissions.CurrentUserOrAdmin"]
-        elif self.action == "set_username":
-            self.permission_classes = djoser_settings.PERMISSIONS.set_username  # ["djoser.permissions.CurrentUserOrAdmin"]
-        return super().get_permissions()
-
     def get_serializer_context(self):
         return {
             'request': self.request,
             'username': self.request.user.username,
         }
 
-    def get_serializer_class(self):
-        if self.action == "create":
-            if djoser_settings.USER_CREATE_PASSWORD_RETYPE:
-                return djoser_settings.SERIALIZERS.user_create_password_retype
-            return djoser_settings.SERIALIZERS.user_create  # core.serializers.UserCreateSerializer
-        elif self.action == "set_password":
-            if djoser_settings.SET_PASSWORD_RETYPE:
-                return djoser_settings.SERIALIZERS.set_password_retype
-            return djoser_settings.SERIALIZERS.set_password
-        elif self.action == "set_username":
-            if djoser_settings.SET_USERNAME_RETYPE:
-                return djoser_settings.SERIALIZERS.set_username_retype
-            return djoser_settings.SERIALIZERS.set_username
-        elif self.action == "me":
-            return djoser_settings.SERIALIZERS.current_user
-        # Default serializer doesn't disclose any information on any users
-        return HideUserSerializer
-
-    # Overriding default create method to remove extra information
+    # Overriding default create method to remove extra information at Response
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -68,7 +39,7 @@ class CustomUserViewSet(UserViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
-    # Override the '/users/me/' endpoint to prevent the modification of fields by a malicious user
+    # Override the '/users/me/' endpoint to prevent un-checked modifications
     # Only allowing GET method for the authenticated user
     @action(["get"], detail=False)
     def me(self, request, *args, **kwargs):
@@ -76,37 +47,21 @@ class CustomUserViewSet(UserViewSet):
         if request.method == "GET":
             return self.retrieve(request, *args, **kwargs)
 
-    # Overriding all the unnecessary actions from the djoser package
+    # Deactivating methods allowing to modify credentials without email
     @action(["get"], detail=False)
-    def activation(self, request, *args, **kwargs):
+    def set_password(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    @action(["get"], detail=False, url_path="set_{}".format(User.USERNAME_FIELD))
+    def set_username(self, request, *args, **kwargs):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    @action(["get"], detail=False)
-    def resend_activation(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    @action(["get"], detail=False)
-    def reset_username(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    @action(["get"], detail=False)
-    def reset_username_confirm(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    @action(["get"], detail=False)
-    def reset_password(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    @action(["get"], detail=False)
-    def reset_password_confirm(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 # ####################################################################################################@
 # Contacts Viewset
 # ####################################################################################################@
 
-class ContactViewSet(ListModelMixin, GenericViewSet):
+class ContactViewSet(GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     # Get => See my contact list
@@ -134,6 +89,7 @@ class ContactViewSet(ListModelMixin, GenericViewSet):
             return Response(contacts)
         except Exception as e:
             print(e)
+
 
     def get_serializer_context(self):
         return {
@@ -199,6 +155,7 @@ class SeeContactRequestViewSet(ListModelMixin, GenericViewSet):
         if self.request.method == 'GET':
             return ContactRequestSerializer
         return HideContactSerializer
+
 
 class AcceptContactRequestViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
