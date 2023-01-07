@@ -8,9 +8,6 @@ from djoser.serializers import (
 from django.core.mail import EmailMessage
 from django.conf import settings
 
-from django.db import IntegrityError, transaction
-
-
 
 # ####################################################################################################@
 # Logger configuration
@@ -37,7 +34,7 @@ class ContextFilter(logging.Filter):
 
 
 logging.basicConfig(level=logging.WARNING,
-                    #format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    # format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
                         logging.FileHandler(settings.LOGS_FILE),
@@ -46,6 +43,7 @@ logging.basicConfig(level=logging.WARNING,
 
 logger = logging.getLogger(__name__)
 logger.addFilter(ContextFilter())
+
 
 # ####################################################################################################@
 # User Serializers
@@ -443,7 +441,6 @@ class AddEventSerializer(serializers.Serializer):
     end_date = serializers.CharField(allow_blank=True, allow_null=True)
     description = serializers.CharField(allow_blank=True, allow_null=True)
     location = serializers.CharField(allow_blank=True, allow_null=True)
-
 
     def save(self, **kwargs):
         try:

@@ -156,7 +156,7 @@ REST_FRAMEWORK = {
     # Render information as JSON
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        # 'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ]
 }
 
@@ -201,12 +201,28 @@ DJOSER = {
     'USER_CREATE_PASSWORD_RETYPE': True,
     'SET_USERNAME_RETYPE': True,
     'SET_PASSWORD_RETYPE': True,
+    'PASSWORD_RESET_CONFIRM_RETYPE': True,
+    'USERNAME_RESET_CONFIRM_RETYPE': True,
     'TOKEN_MODEL': None,
+    # URL to the frontend password reset page.
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    # URL to the frontend username reset page.
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    # URL to the frontend activation page.
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    # Send activation link after creating an account or updating an email ?
+    'SEND_ACTIVATION_EMAIL': True,
+    # Send confirmation after register or activation ?
+    'SEND_CONFIRMATION_EMAIL': False,
+    # Send confirmation after password change ?
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': False,
+    # Send confirmation after username change ?
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': False,
     'SERIALIZERS': {
         'user_create': 'core.serializers.UserCreateSerializer',
         'user': 'core.serializers.UserSerializer',
         'current_user': 'core.serializers.UserSerializer',
-    }
+    },
 }
 
 # Argon2 used by default for storing password

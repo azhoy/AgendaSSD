@@ -71,6 +71,16 @@ class ContactList(models.Model):
         related_name='friends'
     )
 
+    def get_contact_info(self):
+        all_contact_info = []
+        contact_info = {}
+        for contact in self.contacts.all():
+            contact_info[f'id'] = contact.id
+            contact_info[f'username'] = contact.username
+            all_contact_info.append(contact_info)
+            contact_info = {}
+        return all_contact_info
+
     def add_contact(self, username_to_add):
         """
         Add a contact
