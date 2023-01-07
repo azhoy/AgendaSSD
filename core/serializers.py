@@ -38,8 +38,7 @@ for name, logger in logging.root.manager.loggerDict.items():
     logger.disabled = True
 
 # Creating a custom loggers that add sequence number to logs
-logging.basicConfig(level=logging.INFO,
-                    # format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+logging.basicConfig(level=logging.WARNING,
                     format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
                         logging.FileHandler(settings.LOGS_FILE),
