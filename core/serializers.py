@@ -33,15 +33,19 @@ class ContextFilter(logging.Filter):
         return True
 
 
-logging.basicConfig(level=logging.WARNING,
+# Deactivating all the default module loggers
+for name, logger in logging.root.manager.loggerDict.items():
+    logger.disabled = True
+
+# Creating a custom loggers that add sequence number to logs
+logging.basicConfig(level=logging.INFO,
                     # format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
-                    format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+                    format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
                         logging.FileHandler(settings.LOGS_FILE),
                         logging.StreamHandler()
                     ])
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(name="agenda_logger")
 logger.addFilter(ContextFilter())
 
 
