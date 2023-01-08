@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import logging
 import os
+import socket
 from pathlib import Path
 from datetime import timedelta
 
@@ -20,19 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# TODO: Set from Env Variables in prod (=> installation script)
-SECRET_KEY = ')+e@9!)1e98&-=074+6&3b5d)7+))b(10f111-0-2bc13ded0@fb3b=1)d5**7=013=!*7f0*)cb00)ec@@d&8e*&!!b!)7cbb2e=a' \
-             '38@b)fcfb&eac@71e9ca@2e@0)+++&+1c08**(=!f&0368@+b656+fc!563(b*e05*(a+7=df6&c(9+9af!476!!&3b9b9)-=(a-+8' \
-             '8e(+-@!34&51d*-=0)=-ccb4@a6+41806ec!@83)a2fdf@=@4(08+3ea6*(8*d8+95fd&13!d52e528(9*2f!*)*64!e*a-75c9605' \
-             '=))eebef1+dd3d21da@b@bd@3fa&+80+9(67c@bd0-1d=cc479@-4e&(+)35d-fc1=-f-2*(@96cb0+93b0+43+4-32f@9)9-)@=&+' \
-             '35c50=((b!*(69c&2cb8c&d65c33f)ba!eba323a)9da@0a4)e2de!1&05a0510-d@1@7-*a+70&0a-9*&4d=9@30-6(@b5-e404f-@('
+# PRODUCTION ENVIRONMENT VARIABLES
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+DEBUG = False
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # TODO: Remove debug in production
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 
 # A list of strings representing the host/domain names that this Django site can serve.
-ALLOWED_HOSTS = []  # TODO: Set in production
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    f'{ip_address}'
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -50,7 +51,7 @@ INSTALLED_APPS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:8001',
+    'http://127.0.0.1:5173',
 ]
 
 MIDDLEWARE = [
@@ -87,14 +88,20 @@ WSGI_APPLICATION = 'agenda.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+DB_NAME = os.environ['DB_NAME']
+DB_USER = os.environ['DB_USER']
+DB_PASSWORD = os.environ['DB_PASSWORD']
+DB_HOST = os.environ['DB_HOST']
+DB_PORT = os.environ['DB_PORT']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'agenda',
-        'USER': 'dbuser',
-        'PASSWORD': 'P@$$w0rd',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': f'{DB_NAME}',
+        'USER': f'{DB_USER}',
+        'PASSWORD': f'{DB_PASSWORD}',
+        'HOST': f'{DB_HOST}',
+        'PORT': f'{DB_PORT}',
     }
 }
 
@@ -178,8 +185,8 @@ RSA_SIGNING_KEY = Path(BASE_DIR / 'jwt-key').read_text()
 RSA_VERIFYING_KEY = Path(BASE_DIR / 'jwt-key.pub').read_text()
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=4),  # TODO: CHANGE IN PROD !!!
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=6),  # TODO: CHANGE IN PROD !!!
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=3),
     # A new refresh token is submitted when using the refresh token endpoint
     'ROTATE_REFRESH_TOKENS': True,
     # Causes refresh tokens submitted to the refresh endpoints to be added to the blacklist
@@ -243,13 +250,18 @@ PASSWORD_HASHERS = [
 ]
 
 # SMTP Configuration
+DJANGO_EMAIL_USER = os.environ['DJANGO_EMAIL_USER']
+DJANGO_EMAIL_PASSWORD = os.environ['DJANGO_EMAIL_PASSWORD']
+ADMIN_EMAIL = os.environ['ADMIN_EMAIL_ALERT']
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'agenda.ssd.esi@gmail.com'  # TODO: Set in env variables
-EMAIL_HOST_PASSWORD = 'hcsbjxvqeqaeemmx'  # TODO: Set in env variables
-ADMIN_EMAIL_ALERT = 'beck.ragas0m@icloud.com'  # TODO: Set in env variables
+EMAIL_HOST_USER = DJANGO_EMAIL_USER
+EMAIL_HOST_PASSWORD = DJANGO_EMAIL_PASSWORD
+ADMIN_EMAIL_ALERT = ADMIN_EMAIL
+
 
 # CAHCES for throtling (Rate limit)
 
