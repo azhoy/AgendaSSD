@@ -2,6 +2,7 @@ from django.db.models import Q
 from djoser.views import UserViewSet
 from djoser.conf import settings as djoser_settings
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin,
     RetrieveModelMixin, UpdateModelMixin,
@@ -25,6 +26,15 @@ from .serializers import (
 
 
 class CustomUserViewSet(UserViewSet):
+    def permission_denied(self, request, **kwargs):
+        raise NotFound()
+
+    def get_queryset(self):
+        user = self.request.user
+        active_user = User.objects.get(id=user.id)
+        # Only return the active users and is contact
+        queryset = User.objects.filter(Q(id=active_user.id) | Q(friends__user_id=active_user.id))
+        return queryset
 
     def get_serializer_context(self):
         return {

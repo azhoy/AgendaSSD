@@ -13,6 +13,15 @@ from django.conf import settings
 # Logger configuration
 # ####################################################################################################@
 
+LOGS_DIR = settings.BASE_DIR / 'logs'
+LOGS_FILE = LOGS_DIR / 'agenda.log'
+if not LOGS_DIR.exists():
+    # Creating the logs dir if it doesn't exist
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    if not LOGS_FILE.exists():
+        # creating the log file if it doesn't exist
+        LOGS_FILE.touch(exist_ok=True)
+
 class RecordCounter:
     _instance = None
     _count = 0
@@ -41,7 +50,7 @@ for name, logger in logging.root.manager.loggerDict.items():
 logging.basicConfig(level=logging.WARNING,
                     format='%(record_number)s [%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
-                        logging.FileHandler(settings.LOGS_FILE),
+                        logging.FileHandler(LOGS_FILE),
                         logging.StreamHandler()
                     ])
 logger = logging.getLogger(name="agenda_logger")
@@ -74,6 +83,14 @@ class UserSerializer(BaseUserSerializer):
             'public_key',
             'protected_private_key',
             'protected_symmetric_key',
+        ]
+
+
+class OtherUserSerializer(BaseUserSerializer):
+    class Meta(BaseUserSerializer.Meta):
+        fields = [
+            'username',
+            'public_key',
         ]
 
 

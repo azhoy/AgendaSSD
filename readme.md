@@ -3,7 +3,7 @@
 
 ## 2. Features
 ### A) User registration, authentication and revocation
-#### Register 
+#### Register [x]
 - **URL**: /users/
 - **Method**: POST
 - **Request**:
@@ -18,9 +18,8 @@
   - HTTP_201_CREATED
   - HTTP_400_BAD_REQUEST
   
-#### Activate an account (*)
+#### Activate an account (*) [x]
 - **URL**: #/activate/{uid}/{token}
-- **URL**: /users/activation/
 - **Method**: POST
 - **Request**:
   - uid
@@ -30,7 +29,7 @@
   - HTTP_400_BAD_REQUEST
   - HTTP_403_FORBIDDEN (If already activated)
 
-#### Resend activation email
+#### Resend activation email [ ]
 - **URL**:/users/resend_activation/
 - **Method**: POST
 - **Request**:
@@ -40,7 +39,7 @@
   - HTTP_400_BAD_REQUEST
 
 
-#### Reset username
+#### Reset username [ ]
 - **URL**:#/username/reset/confirm/{uid}/{token}
 - **URL**:/users/reset_email/
 - **Method**: POST
@@ -51,7 +50,7 @@
   - HTTP_400_BAD_REQUEST
     -  email
 
-#### Reset username confirmation (*)
+#### Reset username confirmation (*) [ ]
 - **URL**:/users/reset_email/
 - **Method**: POST
 - **Request**:
@@ -62,7 +61,7 @@
 - **Response**
   - HTTP_204_NO_CONTENT
 
-#### Reset password
+#### Reset password [ ]
 - **URL**:#/password/reset/confirm/{uid}/{token}
 - **URL**:/users/reset_email/
 - **Method**: POST
@@ -71,7 +70,7 @@
 - **Response**
   - HTTP_204_NO_CONTENT
 
- #### Reset password confirmation (*)
+ #### Reset password confirmation (*) [ ]
 - **URL**:/users/reset_email/
 - **Method**: POST
 - **Request**:
@@ -83,7 +82,7 @@
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
   
-#### Generate JSON Web Token
+#### Generate JSON Web Token [x]
 - **URL**: /jwt/create/
 - **Method**: POST
 - **Request**:
@@ -96,7 +95,7 @@
   - HTTP_400_BAD_REQUEST
       - non_field_errors
 
-#### Refresh JSON Web Token
+#### Refresh JSON Web Token [x]
 - **URL**: /jwt/refresh/
 - **Method**: POST
 - **Request**:
@@ -108,11 +107,11 @@
   - HTTP_400_BAD_REQUEST
       - non_field_errors
   
-#### Retrieve the authenticated user 
+#### Retrieve the authenticated user [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
-- **URL**: /users/me
+- **URL**: /users/me/
 - **Method**:GET 
 - **Request**:
 - **Response**
@@ -122,8 +121,20 @@
     - protected_private_key
     - protected_symmetric_key
 
+#### Get the public keys of my contacts [x]
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
+- **URL**: /users/
+- **Method**:GET 
+- **Request**:
+- **Response**
+  - HTTP_200_OK
+    - username
+    - public_key
+
 ### B) Adding / deleting a contact
-#### See my contacts
+#### See my contacts [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -134,7 +145,7 @@
   - HTTP_200_OK
     - List of contacts 
 
-#### Send a contact request
+#### Send a contact request [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -146,7 +157,7 @@
   - HTTP_201_CREATED
     - username_to_add
 
-#### See my contact request
+#### See my contact request [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -157,7 +168,7 @@
   - HTTP_200_OK
     - List of contacts requests
     
-#### Accept contact request
+#### Accept contact request [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -169,7 +180,7 @@
   - HTTP_201_CREATED
     - username_to_accept 
     
-#### Decline contact request
+#### Decline contact request [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -181,7 +192,7 @@
   - HTTP_201_CREATED
     - username_to_decline 
     
-#### Delete a contact 
+#### Delete a contact [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -196,7 +207,7 @@
 
 ### C) Creating, editing and deleting an event from the server
 
-#### Add an event
+#### Add an event [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -213,7 +224,7 @@
   - HTTP_201_CREATED
   - HTTP_400_BAD_REQUEST
 
-#### Update an event (Need to be the creator of the event)
+#### Update an event [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -236,7 +247,7 @@
   - HTTP_400_BAD_REQUEST
       - non_fields_errors
     
-#### Delete an event (Need to be the creator of the event)
+#### Delete an event [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -249,7 +260,7 @@
 
 ### D) Invitation to an event
 
-#### Invite a contact to my event (Need to be the creator of the event)
+#### Invite a contact to my event [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -265,7 +276,7 @@
   - HTTP_201_Created
     
 ### E) Checking an agenda
-#### List of events I created
+#### List of events I created [ ]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -276,7 +287,7 @@
   - HTTP_200_OK
     - List of events
 
-#### List of invitations
+#### List of invitations [ ]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -288,7 +299,7 @@
     - List of invitations
 
     
-#### List of events I was invited to (On the clien side)
+#### List of events I was invited to (On the clien side) [ ]
 => Use the list of invitations to decipher the protected_event_id with the user public key and see to which event the user was invited to
 => Do it for each invitation
 

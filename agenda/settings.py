@@ -17,12 +17,6 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Logs file path
-LOGS_FILE = BASE_DIR / 'logs' / 'agenda.log'
-
-# Create the log file if it doesn't exist
-if not LOGS_FILE.exists():
-    LOGS_FILE.touch(exist_ok=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -220,9 +214,10 @@ DJOSER = {
     'USERNAME_CHANGED_EMAIL_CONFIRMATION': False,
     'SERIALIZERS': {
         'user_create': 'core.serializers.UserCreateSerializer',
-        'user': 'core.serializers.UserSerializer',
+        'user': 'core.serializers.OtherUserSerializer',
         'current_user': 'core.serializers.UserSerializer',
     },
+    'HIDE_USERS': False
 }
 
 # Argon2 used by default for storing password
