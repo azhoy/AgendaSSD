@@ -18,6 +18,12 @@ invitation_router.register('invitations', viewset=views.InvitationViewSet, basen
 create_event_router = routers.DefaultRouter()
 create_event_router.register('create_events', viewset=views.CreateEventViewSet, basename='create_events')
 
+# /contacts_events/
+contact_event_router = routers.DefaultRouter()
+contact_event_router.register('contacts_events', viewset=views.MyContactsEventViewSet, basename='contacts_events')
+
+
+
 # /users/
 # /users/me/
 # /users/set_email/
@@ -58,6 +64,7 @@ app_name = 'core'
 # URLConf
 urlpatterns = [
     path('', include(event_router.urls)),
+    path('', include(contact_event_router.urls)),
     path('', include(invitation_router.urls)),
     path('', include(create_event_router.urls)),
     path('', include(user_router.urls)),

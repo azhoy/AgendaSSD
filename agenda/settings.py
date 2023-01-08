@@ -17,12 +17,10 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# At least 512bits => Bc of HMAC SHA-512
 # TODO: Set from Env Variables in prod (=> installation script)
 SECRET_KEY = ')+e@9!)1e98&-=074+6&3b5d)7+))b(10f111-0-2bc13ded0@fb3b=1)d5**7=013=!*7f0*)cb00)ec@@d&8e*&!!b!)7cbb2e=a' \
              '38@b)fcfb&eac@71e9ca@2e@0)+++&+1c08**(=!f&0368@+b656+fc!563(b*e05*(a+7=df6&c(9+9af!476!!&3b9b9)-=(a-+8' \
@@ -44,13 +42,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
     'rest_framework',
     'djoser',
     'core',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:8001',
+]
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -158,8 +162,8 @@ REST_FRAMEWORK = {
         ],
     # Rate limiting the API
         'DEFAULT_THROTTLE_RATES': {
-            'anon': '3/minute',  # 5 request per minutes for unhauthenticated user
-            'user': '10/minute'
+            'anon': '60/minute',  # 5 request per minutes for unhauthenticated user
+            'user': '60/minute'
         }
 }
 

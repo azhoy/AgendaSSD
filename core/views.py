@@ -29,8 +29,7 @@ from .serializers import (
 # ####################################################################################################@
 
 # Client side encrypted data pattern
-pattern = "\d\.(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)\|" \
-          "(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)"
+pattern = "\d\.(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)\|(?:[A-Za-z0-9+/]{4})*|(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)"
 
 
 # ####################################################################################################@
@@ -398,7 +397,7 @@ class EventViewSet(
 
         active_user = User.objects.get(id=user.id)
         queryset = Event.objects.prefetch_related('creator').filter(
-            Q(creator_id=active_user.id) | Q(creator__friends__user_id=active_user.id)
+            creator_id=active_user.id
         )
         return queryset
 
@@ -501,6 +500,26 @@ class EventViewSet(
         else:
             logger.warning(f"{member.username} tried to delete an event that's not its")
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+class MyContactsEventViewSet(
+    ListModelMixin,
+    RetrieveModelMixin,
+    GenericViewSet
+):
+    # queryset = Event.objects.prefetch_related('creator').all()
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+    serializer_class = EventSerializer
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Event.objects.prefetch_related('creator').all()
+
+        active_user = User.objects.get(id=user.id)
+        # Only fetch friends events
+        queryset = Event.objects.prefetch_related('creator').filter(
+            creator__friends__user_id=active_user.id
+        )
+        return queryset
 
 # ####################################################################################################@
 # Logout Viewsets
