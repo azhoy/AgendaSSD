@@ -1,3 +1,4 @@
+from django.db.models import Q
 from djoser.views import UserViewSet
 from djoser.conf import settings as djoser_settings
 from rest_framework.decorators import action
@@ -332,8 +333,11 @@ class EventViewSet(
         if user.is_staff:
             return Event.objects.prefetch_related('creator').all()
 
-        member_id = User.objects.only('id').get(id=user.id)
-        return Event.objects.prefetch_related('creator').filter(creator_id=member_id)
+        active_user = User.objects.get(id=user.id)
+        queryset = Event.objects.prefetch_related('creator').filter(
+            Q(creator_id=active_user.id) | Q(creator__friends__user_id=active_user.id)
+        )
+        return queryset
 
     def get_serializer_context(self):
         return {
