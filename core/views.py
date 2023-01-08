@@ -1,4 +1,8 @@
+import re
+
 from django.db.models import Q
+from django.conf import settings
+from django.core.mail import EmailMessage
 from djoser.views import UserViewSet
 from djoser.conf import settings as djoser_settings
 from rest_framework.decorators import action
@@ -12,12 +16,21 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import GenericViewSet
 
+from .serializers import logger
 from .models import Event, User, Invitation, ContactList, ContactRequest
 from .serializers import (
     ContactSerializer, AddContactRequestSerializer, ContactRequestSerializer, HideContactSerializer,
     AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer,
     MyCreatedEventsSerializer, EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
     InvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
+
+# ####################################################################################################@
+# Regex configuration
+# ####################################################################################################@
+
+# Client side encrypted data pattern
+pattern = "\d\.(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)\|" \
+          "(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)"
 
 
 # ####################################################################################################@
@@ -380,6 +393,7 @@ class EventViewSet(
         return {
             'request': self.request,
             'username': self.request.user.username,
+            'data': self.request.data
         }
 
     def get_serializer_class(self):
@@ -421,13 +435,47 @@ class EventViewSet(
             # forcibly invalidate the prefetch cache on the instance.
             event._prefetched_objects_cache = {}
 
-        # Only the creator of the event can update this event
-        if member.id == event.creator.id:
-            serializer = self.get_serializer(event, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        # Check if the data is encrypted
+        suspect = False
+        # Getting all the data sent
+        for (key, value) in self.request.data.items():
+            if not re.match(pattern, value):
+                suspect = True
+                logger.warning(
+                    f"{member.username} sent unencrypted data to the server to the server while updating an event."
+                    f" Locking the account"
+                )
+        if suspect:
+            # Mail to admin
+            alert_email = EmailMessage(
+                'Warning alert - Django server',
+                f"The user {member.username} managed to send unencrypted data"
+                f"to the server to the server while updating an event. Locking out its account.",
+                settings.EMAIL_HOST_USER,
+                [f'{settings.ADMIN_EMAIL_ALERT}']
+            )
+            alert_email.send()
+            # Mail to user
+            info_email = EmailMessage(
+                'Locking your account !',
+                f"Due to suspicious activities your account was locked."
+                f" Wait for administrator investigation please.",
+                settings.EMAIL_HOST_USER,
+                [f'{member.email}']
+            )
+            info_email.send()
+            # Locking out the account
+            member.lock_user()
+        else:
+            # Only the creator of the event can update this event
+            if member.id == event.creator.id:
+                serializer = self.get_serializer(event, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(status=status.HTTP_200_OK)
+            else:
+                logger.warning(f"{member.username} tried to modify an event that's not its")
+                return Response(status=status.HTTP_404_NOT_FOUND)
 
     # Overriding the delete method
     def destroy(self, request, *args, **kwargs):
@@ -437,4 +485,6 @@ class EventViewSet(
         if member.id == event.creator.id:
             event.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            logger.warning(f"{member.username} tried to delete an event that's not its")
+            return Response(status=status.HTTP_404_NOT_FOUND)

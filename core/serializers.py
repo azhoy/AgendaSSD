@@ -76,7 +76,7 @@ class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         fields = [
             'email',
-            'username',  # If mandatory => Auto generate on client side
+            'username',
             'password',
             're_password',
             'public_key',
@@ -493,17 +493,29 @@ class AddEventSerializer(serializers.Serializer):
                     or not description_encrypted \
                     or not location_encrypted:
                 logger.warning(
-                    f"{active_user.username} sent unencrypted data to the server to the server while creating an event"
+                    f"{active_user.username} sent unencrypted data to the server to the server while creating an event."
+                    f" Locking the account"
                 )
                 # Mail to admin
                 alert_email = EmailMessage(
                     'Warning alert - Django server',
-                    f"The user {active_user.username} sent unencrypted data "
-                    f"to the server to the server while creating an event",
+                    f"The user {active_user.username} managed to send unencrypted data"
+                    f"to the server to the server while creating an event. Locking out its account.",
                     settings.EMAIL_HOST_USER,
                     [f'{settings.ADMIN_EMAIL_ALERT}']
                 )
                 alert_email.send()
+                # Mail to user
+                info_email = EmailMessage(
+                    'Locking your account !',
+                    f"Due to suspicious activities your account was locked."
+                    f" Wait for administrator investigation please.",
+                    settings.EMAIL_HOST_USER,
+                    [f'{active_user.email}']
+                )
+                info_email.send()
+                # Locking out the account
+                active_user.lock_user()
             else:
                 # Save the event
                 Event.objects.create(
@@ -515,7 +527,6 @@ class AddEventSerializer(serializers.Serializer):
                     description=self.context['description'],
                     location=self.context['location'],
                 )
-                logger.info(f"{active_user.username} created an event")
         except User.DoesNotExist:
             logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
