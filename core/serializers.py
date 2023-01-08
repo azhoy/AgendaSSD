@@ -7,6 +7,7 @@ from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.models import User, Event, Invitation, ContactList, ContactRequest
 
@@ -581,3 +582,37 @@ class HideEventsSerializers(serializers.ModelSerializer):
         model = Event
         fields = [
         ]
+
+
+# ####################################################################################################@
+# Logout Serializers
+# ####################################################################################################@
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def save(self, **kwargs):
+        """Blacklist the refresh token extracted from the logout request"""
+        try:
+            # Get the user profile
+            active_user = User.objects.get(username=self.context['username'])
+
+            # Getting the refresh token of the user whose loging out
+            refresh = self.context['refresh']
+            token = RefreshToken(refresh)
+            # Blacklisting the token
+            token.blacklist()
+
+        except User.DoesNotExist:
+            logger.critical(
+                f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"
+            )
+            # Mail to admin
+            alert_email = EmailMessage(
+                'Critical alert - Django server',
+                f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB",
+                settings.EMAIL_HOST_USER,
+                [f'{settings.ADMIN_EMAIL_ALERT}']
+            )
+            alert_email.send()
+

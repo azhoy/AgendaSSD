@@ -22,7 +22,7 @@ from .serializers import (
     ContactSerializer, AddContactRequestSerializer, ContactRequestSerializer, HideContactSerializer,
     AcceptContactSerializer, DeclineContactSerializer, DeleteContactSerializer, HideUserSerializer,
     MyCreatedEventsSerializer, EventSerializer, UpdateEventSerializer, AddEventSerializer, HideEventsSerializers,
-    InvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer)
+    InvitationsSerializer, AddInvitationsSerializer, HideInvitationsSerializer, LogoutSerializer)
 
 # ####################################################################################################@
 # Regex configuration
@@ -39,8 +39,8 @@ pattern = "\d\.(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)\|" 
 
 
 class CustomUserViewSet(UserViewSet):
-    #def permission_denied(self, request, **kwargs):
-    #    raise NotFound()
+    def permission_denied(self, request, **kwargs):
+        raise NotFound()
 
     def get_queryset(self):
         user = self.request.user
@@ -345,6 +345,7 @@ class InvitationViewSet(CreateModelMixin, GenericViewSet):
 # ####################################################################################################@
 # Event Viewsets
 # ####################################################################################################@
+
 class CreateEventViewSet(
     CreateModelMixin,
     GenericViewSet
@@ -500,3 +501,29 @@ class EventViewSet(
         else:
             logger.warning(f"{member.username} tried to delete an event that's not its")
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+# ####################################################################################################@
+# Logout Viewsets
+# ####################################################################################################@
+
+class LogOutViewSet(
+    CreateModelMixin,
+    GenericViewSet
+):
+    permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
+    serializer_class = LogoutSerializer
+    
+    # Overriding default create method to remove extra information
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # headers = self.get_success_headers(serializer.data)
+        return Response(data={"message": "Log out."}, status=status.HTTP_200_OK)
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'username': self.request.user.username,
+            'refresh': self.request.data['refresh']
+        }

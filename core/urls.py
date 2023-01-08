@@ -50,6 +50,10 @@ decline_contact_requests_router.register('decline_contact_requests', viewset=vie
 delete_contact_router = routers.DefaultRouter()
 delete_contact_router.register('delete_contact', viewset=views.DeleteContactViewSet, basename='delete_contact')
 
+# /logout/
+logout_router = routers.DefaultRouter()
+logout_router.register('logout', viewset=views.LogOutViewSet, basename='logout')
+
 app_name = 'core'
 # URLConf
 urlpatterns = [
@@ -63,6 +67,7 @@ urlpatterns = [
     path('contacts/', include(accept_contact_requests_router.urls)),
     path('contacts/', include(decline_contact_requests_router.urls)),
     path('contacts/', include(delete_contact_router.urls)),
+    path('', include(logout_router.urls)),
     re_path(r"^jwt/create/?", jwtviews.TokenObtainPairView.as_view(), name="jwt-create"),
     re_path(r"^jwt/refresh/?", jwtviews.TokenRefreshView.as_view(), name="jwt-refresh"),
     path('accounts/activate/<uid>/<token>', views.ActivateUser.as_view({'get': 'activation'}), name='activation')
