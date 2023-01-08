@@ -57,11 +57,23 @@ class CustomUserViewSet(UserViewSet):
 
     # Overriding default create method to remove extra information at Response
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
+        protected_private_key = self.request.data['protected_private_key']
+        protected_symmetric_key = self.request.data['protected_symmetric_key']
+
+        # Checking the data received through the POST method before saving it on the server
+        protected_private_key_encrypted = re.match(pattern, protected_private_key)
+        protected_symmetric_key = re.match(pattern, protected_symmetric_key)
+
+        if not protected_private_key_encrypted or not protected_symmetric_key:
+            logger.warning(
+                "A user a found a way to send unencrypted data to the server while registering"
+            )
+        else:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(data={"message": "ok"}, status=status.HTTP_201_CREATED, headers=headers)
 
     # Override the '/users/me/' endpoint to prevent un-checked modifications
     # Only allowing GET method for the authenticated user
