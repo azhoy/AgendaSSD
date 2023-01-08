@@ -1,35 +1,11 @@
 # AgendaSSD
 
-## Modèles
+Mushingelete Aramson FELHO 000574088
+Ayoub TOUHAMI
 
-- Utilisateurs 
-  - Mail
-  - mot de passe
-- Agenda
-  - Utilisateur
-  - events
+## How to build the project
 
-- Events
-  - nom
-  - utilisateur (ForeignKey)
-  - date début
-  - date fin
-  - localisation
-  - description
+Laucnh the script install.sh as a super user
 
-## Fonctionalités
-
-[x] Login
-
-[x] Register
-
-[x] Change credentials
-
-[x] Create an event
-
-[x] Change an event 
-
-[x] Delete an event
-
-[x] Display Agenda
+## How to use the project
 
