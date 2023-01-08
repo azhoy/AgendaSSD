@@ -1,13 +1,14 @@
 import logging
+import re
 
-from rest_framework import serializers
-from core.models import User, Event, Invitation, ContactList, ContactRequest
+from django.core.mail import EmailMessage
+from django.conf import settings
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
-from django.core.mail import EmailMessage
-from django.conf import settings
+from rest_framework import serializers
 
+from core.models import User, Event, Invitation, ContactList, ContactRequest
 
 # ####################################################################################################@
 # Logger configuration
@@ -21,6 +22,7 @@ if not LOGS_DIR.exists():
     if not LOGS_FILE.exists():
         # creating the log file if it doesn't exist
         LOGS_FILE.touch(exist_ok=True)
+
 
 class RecordCounter:
     _instance = None
@@ -55,6 +57,14 @@ logging.basicConfig(level=logging.WARNING,
                     ])
 logger = logging.getLogger(name="agenda_logger")
 logger.addFilter(ContextFilter())
+
+# ####################################################################################################@
+# Regex configuration
+# ####################################################################################################@
+
+# Client side encrypted data pattern
+pattern = "\d\.(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)\|" \
+          "(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)"
 
 
 # ####################################################################################################@
@@ -463,20 +473,49 @@ class AddEventSerializer(serializers.Serializer):
     location = serializers.CharField(allow_blank=True, allow_null=True)
 
     def save(self, **kwargs):
+
         try:
             # Get the user profile
             active_user = User.objects.get(username=self.context['username'])
-            # Save the event
-            Event.objects.create(
-                creator=active_user,
-                protected_event_key=self.context['protected_event_key'],
-                title=self.context['title'],
-                start_date=self.context['start_date'],
-                end_date=self.context['end_date'],
-                description=self.context['description'],
-                location=self.context['location'],
-            )
-            logger.info(f"{active_user.username} created an event")
+
+            # Checking the data received through the POST method before saving it on the server
+            event_key_encrypted = re.match(pattern, self.context['protected_event_key'])
+            title_encrypted = re.match(pattern, self.context['title'])
+            start_date_encrypted = re.match(pattern, self.context['start_date'])
+            end_date_encrypted = re.match(pattern, self.context['end_date'])
+            description_encrypted = re.match(pattern, self.context['description'])
+            location_encrypted = re.match(pattern, self.context['location'])
+
+            if not event_key_encrypted \
+                    or not title_encrypted \
+                    or not start_date_encrypted \
+                    or not end_date_encrypted \
+                    or not description_encrypted \
+                    or not location_encrypted:
+                logger.warning(
+                    f"{active_user.username} sent unencrypted data to the server to the server while creating an event"
+                )
+                # Mail to admin
+                alert_email = EmailMessage(
+                    'Warning alert - Django server',
+                    f"The user {active_user.username} sent unencrypted data "
+                    f"to the server to the server while creating an event",
+                    settings.EMAIL_HOST_USER,
+                    [f'{settings.ADMIN_EMAIL_ALERT}']
+                )
+                alert_email.send()
+            else:
+                # Save the event
+                Event.objects.create(
+                    creator=active_user,
+                    protected_event_key=self.context['protected_event_key'],
+                    title=self.context['title'],
+                    start_date=self.context['start_date'],
+                    end_date=self.context['end_date'],
+                    description=self.context['description'],
+                    location=self.context['location'],
+                )
+                logger.info(f"{active_user.username} created an event")
         except User.DoesNotExist:
             logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"

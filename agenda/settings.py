@@ -208,9 +208,9 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': True,
     # Send confirmation after register or activation ?
     'SEND_CONFIRMATION_EMAIL': False,
-    # Send confirmation after password change ?
+    # Send confirmation after password change
     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
-    # Send confirmation after username change ?
+    # Send confirmation after username change
     'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
     'SERIALIZERS': {
         'user_create': 'core.serializers.UserCreateSerializer',

@@ -20,7 +20,7 @@
   
 #### Activate an account (*) [x]
 - **URL**: #/activate/{uid}/{token}
-- **Method**: POST
+- **Method**: POST (GET => POST)
 - **Request**:
   - uid
   - token
@@ -29,7 +29,7 @@
   - HTTP_400_BAD_REQUEST
   - HTTP_403_FORBIDDEN (If already activated)
 
- #### Change email
+ #### Change email [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
@@ -43,7 +43,7 @@
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
 
- #### Change password
+ #### Change password [x]
 - **Header** : 
   - Key : Authorization
   - Value: JWT <access_token>
