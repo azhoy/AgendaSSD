@@ -65,4 +65,5 @@ urlpatterns = [
     path('contacts/', include(delete_contact_router.urls)),
     re_path(r"^jwt/create/?", jwtviews.TokenObtainPairView.as_view(), name="jwt-create"),
     re_path(r"^jwt/refresh/?", jwtviews.TokenRefreshView.as_view(), name="jwt-refresh"),
+    path('accounts/activate/<uid>/<token>', views.ActivateUser.as_view({'get': 'activation'}), name='activation')
 ]

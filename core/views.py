@@ -57,6 +57,19 @@ class CustomUserViewSet(UserViewSet):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+class ActivateUser(UserViewSet):
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs.setdefault('context', self.get_serializer_context())
+
+        # this line is the only change from the base implementation.
+        kwargs['data'] = {"uid": self.kwargs['uid'], "token": self.kwargs['token']}
+
+        return serializer_class(*args, **kwargs)
+
+    def activation(self, request, uid, token, *args, **kwargs):
+        super().activation(request, *args, **kwargs)
+        return Response(data={"message": "Account successfully activated"}, status=status.HTTP_204_NO_CONTENT)
 
 # ####################################################################################################@
 # Contacts Viewset
@@ -325,7 +338,7 @@ class EventViewSet(
     DestroyModelMixin,
     GenericViewSet
 ):
-    queryset = Event.objects.prefetch_related('creator').all()
+    # queryset = Event.objects.prefetch_related('creator').all()
     permission_classes = [IsAuthenticated]  # All actions in this class are not available to unauthenticated users
 
     def get_queryset(self):

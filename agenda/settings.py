@@ -156,7 +156,7 @@ REST_FRAMEWORK = {
     # Render information as JSON
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+       #  'rest_framework.renderers.BrowsableAPIRenderer',
     ]
 }
 
@@ -209,7 +209,7 @@ DJOSER = {
     # URL to the frontend username reset page.
     'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
     # URL to the frontend activation page.
-    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'ACTIVATION_URL': 'accounts/activate/{uid}/{token}',
     # Send activation link after creating an account or updating an email ?
     'SEND_ACTIVATION_EMAIL': True,
     # Send confirmation after register or activation ?
