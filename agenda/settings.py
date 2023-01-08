@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # PRODUCTION ENVIRONMENT VARIABLES
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+SECRET_KEY = 'qk3yb3H5dLDD@Y8v9Y$R8Zuk2tTTuVqykKxD@Fbd5PmZKdSaYQtQf9HCFd$xWuAFmtkWw'
 DEBUG = False
 
 hostname = socket.gethostname()
@@ -88,20 +88,10 @@ WSGI_APPLICATION = 'agenda.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DB_NAME = os.environ['DB_NAME']
-DB_USER = os.environ['DB_USER']
-DB_PASSWORD = os.environ['DB_PASSWORD']
-DB_HOST = os.environ['DB_HOST']
-DB_PORT = os.environ['DB_PORT']
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': f'{DB_NAME}',
-        'USER': f'{DB_USER}',
-        'PASSWORD': f'{DB_PASSWORD}',
-        'HOST': f'{DB_HOST}',
-        'PORT': f'{DB_PORT}',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
     }
 }
 
@@ -176,11 +166,9 @@ REST_FRAMEWORK = {
 
 # JWT options
 
-# TODO: Set in env variable genreated automattically
 # openssl genrsa -out jwt-key 4096
 RSA_SIGNING_KEY = Path(BASE_DIR / 'jwt-key').read_text()
 
-# TODO: Set in env variable genreated automattically
 # openssl rsa -in jwt-key -pubout > jwt-key.pub
 RSA_VERIFYING_KEY = Path(BASE_DIR / 'jwt-key.pub').read_text()
 
@@ -250,17 +238,14 @@ PASSWORD_HASHERS = [
 ]
 
 # SMTP Configuration
-DJANGO_EMAIL_USER = os.environ['DJANGO_EMAIL_USER']
-DJANGO_EMAIL_PASSWORD = os.environ['DJANGO_EMAIL_PASSWORD']
-ADMIN_EMAIL = os.environ['ADMIN_EMAIL_ALERT']
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = DJANGO_EMAIL_USER
-EMAIL_HOST_PASSWORD = DJANGO_EMAIL_PASSWORD
-ADMIN_EMAIL_ALERT = ADMIN_EMAIL
+EMAIL_HOST_USER = "agenda.ssd.esi@gmail.com"
+EMAIL_HOST_PASSWORD = "hcsbjxvqeqaeemmx"
+ADMIN_EMAIL_ALERT = "beck.ragas0m@icloud.com"
 
 
 # CAHCES for throtling (Rate limit)
