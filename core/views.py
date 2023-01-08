@@ -26,8 +26,8 @@ from .serializers import (
 
 
 class CustomUserViewSet(UserViewSet):
-    def permission_denied(self, request, **kwargs):
-        raise NotFound()
+    #def permission_denied(self, request, **kwargs):
+    #    raise NotFound()
 
     def get_queryset(self):
         user = self.request.user
@@ -59,11 +59,25 @@ class CustomUserViewSet(UserViewSet):
             return self.retrieve(request, *args, **kwargs)
 
     # Deactivating methods allowing to modify credentials without email
+
     @action(["get"], detail=False)
-    def set_password(self, request, *args, **kwargs):
+    def resend_activation(self, request, *args, **kwargs):
         return Response(status=status.HTTP_404_NOT_FOUND)
-    @action(["get"], detail=False, url_path="set_{}".format(User.USERNAME_FIELD))
-    def set_username(self, request, *args, **kwargs):
+
+    @action(["get"], detail=False)
+    def reset_username(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(["get"], detail=False)
+    def reset_username_confirm(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(["get"], detail=False)
+    def reset_password(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(["get"], detail=False)
+    def reset_password_confirm(self, request, *args, **kwargs):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 

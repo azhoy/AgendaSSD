@@ -29,59 +29,34 @@
   - HTTP_400_BAD_REQUEST
   - HTTP_403_FORBIDDEN (If already activated)
 
-#### Resend activation email [ ]
-- **URL**:/users/resend_activation/
+ #### Change email
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
+- **URL**: /users/set_email/
 - **Method**: POST
 - **Request**:
-  - email
-- **Response**
-  - HTTP_204_NO_CONTENT
-  - HTTP_400_BAD_REQUEST
-
-
-#### Reset username [ ]
-- **URL**:#/username/reset/confirm/{uid}/{token}
-- **URL**:/users/reset_email/
-- **Method**: POST
-- **Request**:
-  - email
-- **Response**
-  - HTTP_204_NO_CONTENT
-  - HTTP_400_BAD_REQUEST
-    -  email
-
-#### Reset username confirmation (*) [ ]
-- **URL**:/users/reset_email/
-- **Method**: POST
-- **Request**:
-  - uid
-  - token
   - new_email
   - re_new_email
-- **Response**
-  - HTTP_204_NO_CONTENT
-
-#### Reset password [ ]
-- **URL**:#/password/reset/confirm/{uid}/{token}
-- **URL**:/users/reset_email/
-- **Method**: POST
-- **Request**:
-  - email
-- **Response**
-  - HTTP_204_NO_CONTENT
-
- #### Reset password confirmation (*) [ ]
-- **URL**:/users/reset_email/
-- **Method**: POST
-- **Request**:
-  - uid
-  - token
-  - new_password
-  - re_new_password
+  - current_password
 - **Response**
   - HTTP_204_NO_CONTENT
   - HTTP_400_BAD_REQUEST
-  
+
+ #### Change password
+- **Header** : 
+  - Key : Authorization
+  - Value: JWT <access_token>
+- **URL**: /users/set_password/
+- **Method**: POST
+- **Request**:
+  - new_password
+  - re_new_password
+  - current_password
+- **Response**
+  - HTTP_204_NO_CONTENT
+  - HTTP_400_BAD_REQUEST
+
 #### Generate JSON Web Token [x]
 - **URL**: /jwt/create/
 - **Method**: POST
