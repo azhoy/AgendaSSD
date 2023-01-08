@@ -345,45 +345,79 @@ class AddInvitationsSerializer(serializers.Serializer):
         # Getting the creator user object
         try:
             active_member = User.objects.get(username=self.context['username'])
-            try:
-                # Getting the event object to invite to
-                # The id of the event is taken from the URL on the client side
-                # The server can't see its value
-                event = Event.objects.prefetch_related('creator').get(id=self.context['event_id'])
-                # If the users to invite exists => if the username input is correct
+
+            # Checking the data received through the POST method before saving it on the server
+            protected_event_id_encrypted = re.match(pattern, self.context['protected_event_id'])
+            protected_event_key_encrypted = re.match(pattern, self.context['protected_event_key'])
+            protected_participants_list_encrypted = re.match(pattern, self.context['protected_participants_list'])
+
+            if not protected_event_id_encrypted \
+                    or not protected_event_key_encrypted \
+                    or not protected_participants_list_encrypted:
+                logger.warning(
+                    f"{active_member.username} managed to send unencrypted data to the server to the server while inviting a user."
+                    f" Locking the account"
+                )
+                # Mail to admin
+                alert_email = EmailMessage(
+                    'Warning alert - Django server',
+                    f"The user {active_member.username} managed to send unencrypted data"
+                    f"to the server to the server while creating an event. Locking out its account.",
+                    settings.EMAIL_HOST_USER,
+                    [f'{settings.ADMIN_EMAIL_ALERT}']
+                )
+                alert_email.send()
+                # Mail to user
+                info_email = EmailMessage(
+                    'Locking your account !',
+                    f"Due to suspicious activities your account was locked."
+                    f" Wait for administrator investigation please.",
+                    settings.EMAIL_HOST_USER,
+                    [f'{active_member.email}']
+                )
+                info_email.send()
+                # Locking out the account
+                active_member.lock_user()
+            else:
                 try:
-                    user_invited = User.objects.get(username=self.context['username_to_invite'][0])
-
-                    # If the creator contact list exists
+                    # Getting the event object to invite to
+                    # The id of the event is taken from the URL on the client side
+                    # The server can't see its value
+                    event = Event.objects.prefetch_related('creator').get(id=self.context['event_id'])
+                    # If the users to invite exists => if the username input is correct
                     try:
-                        creator_contact_list = ContactList.objects.get(user__username=self.context['username'])
-                    except ContactList.DoesNotExist:
-                        creator_contact_list = ContactList(user__username=self.context['username'])
-                        creator_contact_list.save()
+                        user_invited = User.objects.get(username=self.context['username_to_invite'])
 
-                    # If the active user is the creator of the event
-                    if event.creator.id == active_member.id:
-                        # If the invited member is in the contact list of the creator of the event
-                        if creator_contact_list.is_mutual_contact(user_invited):
-                            # Create an invitation for the user that enables him to read the ciphered event detail
-                            Invitation.objects.create(
-                                user_invited=user_invited,
-                                protected_event_key=self.context['protected_event_key'][0],
-                                protected_event_id=self.context['protected_event_id'][0]
-                            )
+                        # If the creator contact list exists
+                        try:
+                            creator_contact_list = ContactList.objects.get(user__username=self.context['username'])
+                        except ContactList.DoesNotExist:
+                            creator_contact_list = ContactList(user__username=self.context['username'])
+                            creator_contact_list.save()
 
-                            # Updating the list of participants
-                            event.update_participants(self.context['protected_participants_list'][0])
+                        # If the active user is the creator of the event
+                        if event.creator.id == active_member.id:
+                            # If the invited member is in the contact list of the creator of the event
+                            if creator_contact_list.is_mutual_contact(user_invited):
+                                # Create an invitation for the user that enables him to read the ciphered event detail
+                                Invitation.objects.create(
+                                    user_invited=user_invited,
+                                    protected_event_key=self.context['protected_event_key'],
+                                    protected_event_id=self.context['protected_event_id']
+                                )
+
+                                # Updating the list of participants
+                                event.update_participants(self.context['protected_participants_list'])
+                            else:
+                                logger.info(
+                                    f"{active_member.username} tried to invite {user_invited.username} but this user is not in its contact list")
                         else:
-                            logger.info(
-                                f"{active_member.username} tried to invite {user_invited.username} but this user is not in its contact list")
-                    else:
-                        logger.warning(
-                            f"{active_member.username} tried to invite {user_invited.username} to {event.creator.username} event")
-                except User.DoesNotExist:
-                    logger.info(f'{active_member.username} tried to invite a user that doesnt exist to an event')
-            except Exception as e:
-                logger.warning(f'{active_member.username} tried to access an invalid event via the URL')
+                            logger.warning(
+                                f"{active_member.username} tried to invite {user_invited.username} to {event.creator.username} event")
+                    except User.DoesNotExist:
+                        logger.info(f'{active_member.username} tried to invite a user that doesnt exist to an event')
+                except Exception as e:
+                    logger.warning(f'{active_member.username} tried to access an invalid event via the URL')
         except User.DoesNotExist:
             logger.critical(
                 f"The user {self.context['username']} is authenticated from the JWT request but does not exist in the DB"

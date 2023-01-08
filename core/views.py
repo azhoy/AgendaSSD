@@ -323,10 +323,10 @@ class InvitationViewSet(CreateModelMixin, GenericViewSet):
             'request': self.request,
             'event_id': self.kwargs['event_pk'],
             'username': self.request.user.username,
-            'username_to_invite': self.request.POST.getlist('username_to_invite'),
-            'protected_event_id': self.request.POST.getlist('protected_event_id'),
-            'protected_event_key': self.request.POST.getlist('protected_event_key'),
-            'protected_participants_list': self.request.POST.getlist('protected_participants_list'),
+            'username_to_invite': self.request.data['username_to_invite'],
+            'protected_event_id': self.request.data['protected_event_id'],
+            'protected_event_key': self.request.data['protected_event_key'],
+            'protected_participants_list': self.request.data['protected_participants_list']
         }
 
 
