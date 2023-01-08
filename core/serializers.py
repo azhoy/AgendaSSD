@@ -471,6 +471,7 @@ class MyCreatedEventsSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             'event_id',
+            'protected_event_key',
             'title',
             'start_date',
             'end_date',

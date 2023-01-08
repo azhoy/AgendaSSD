@@ -150,8 +150,17 @@ REST_FRAMEWORK = {
     # Render information as JSON
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ]
+        # 'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+            # 'rest_framework.throttling.AnonRateThrottle',
+            'rest_framework.throttling.UserRateThrottle'
+        ],
+    # Rate limiting the API
+        'DEFAULT_THROTTLE_RATES': {
+            'anon': '3/minute',  # 5 request per minutes for unhauthenticated user
+            'user': '10/minute'
+        }
 }
 
 # JWT options
@@ -237,3 +246,11 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'agenda.ssd.esi@gmail.com'  # TODO: Set in env variables
 EMAIL_HOST_PASSWORD = 'hcsbjxvqeqaeemmx'  # TODO: Set in env variables
 ADMIN_EMAIL_ALERT = 'beck.ragas0m@icloud.com'  # TODO: Set in env variables
+
+# CAHCES for throtling (Rate limit)
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
