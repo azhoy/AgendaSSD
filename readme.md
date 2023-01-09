@@ -42,3 +42,6 @@ npm run dev
 
 ´ 
 
+## Account Activation
+
+After registration, a mail will be sent to activate the account. Most likely, the mail will be in the spam list. After clicking on the link you will not be redirected, but you will be able to login on the client (port 5173).
