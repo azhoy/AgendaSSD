@@ -92,7 +92,7 @@ export const KeyProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 });
                 const data = await response.json();
                 if (data.message === 'ok') {
-                    alert('Registered !');
+                    alert('Registered ! Check your emails to activate your account');
                     navigate('login')
                 } else {
                     console.log("Error Occured!");
