@@ -91,7 +91,7 @@ WSGI_APPLICATION = 'agenda.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'mydatabase',
+        'NAME': 'db.sqlite3',
     }
 }
 
@@ -160,7 +160,7 @@ REST_FRAMEWORK = {
     # Rate limiting the API
         'DEFAULT_THROTTLE_RATES': {
             'anon': '60/minute',  # 5 request per minutes for unhauthenticated user
-            'user': '60/minute'
+            'user': '250/minute'
         }
 }
 

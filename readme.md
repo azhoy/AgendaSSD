@@ -19,12 +19,18 @@ Run the installation script 'install.sh'
 Backend port 8000:
  ´
 cd backend
+
 python3 manage.py migrate
+
 python3 manage.py runserver
  ´
 
  Frontend (on another terminal) port 5173 :
  ´
 cd frontend
+
+sudo npm install node (if it does not work install node >=16)
+
 npm run dev
  ´ 
+
