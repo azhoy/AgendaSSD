@@ -12,7 +12,7 @@ apt install node -y
 
 
 # Install 
-pip install -r /backend/requirements.txt
+pip install -r ./backend/requirements.txt
 
 # Install
 

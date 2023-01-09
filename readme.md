@@ -1,35 +1,14 @@
 # AgendaSSD
 
-## Modèles
+Mushingelete Aramson Felho - Matricule: 000574088
+Ayoub Touhami - Matricule: 575007
 
-- Utilisateurs 
-  - Mail
-  - mot de passe
-- Agenda
-  - Utilisateur
-  - events
+## How to use install the project
+`
+cd AgendaSSD
+sudo chmod +x install.sh
+sudo ./install.sh
+`
+Run the installation script 'install.sh'
 
-- Events
-  - nom
-  - utilisateur (ForeignKey)
-  - date début
-  - date fin
-  - localisation
-  - description
-
-## Fonctionalités
-
-[x] Login
-
-[x] Register
-
-[x] Change credentials
-
-[x] Create an event
-
-[x] Change an event 
-
-[x] Delete an event
-
-[x] Display Agenda
-
+## How to run the project
