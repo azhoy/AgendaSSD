@@ -13,7 +13,7 @@ apt install npm -y
 
 # Install
 cd backend
-pip install -r /backend/requirements.txt
+pip install -r ./backend/requirements.txt
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
