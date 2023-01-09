@@ -17,5 +17,5 @@ pip install -r ./backend/requirements.txt
 # Install
 
 sudo apt install -y npm
-sudo apt install -y nodejs 
+sudo npm install -y node
 sudo npm install --prefix ./frontend
