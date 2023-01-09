@@ -36,7 +36,7 @@ python3 manage.py runserver
  ´
 cd frontend
 
-sudo npm install node (if it does not work install node >=16)
+npm install node 
 
 npm run dev
 
